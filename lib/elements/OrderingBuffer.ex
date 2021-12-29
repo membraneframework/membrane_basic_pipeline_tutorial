@@ -20,27 +20,27 @@ defmodule Basic.Elements.OrderingBuffer do
   def handle_init(%__MODULE__{demand_factor: demand_factor}) do
     {:ok,
     %{
-      ordered_lines: [],
+      ordered_packets: [],
       last_processed_seq_id: 0,
       demand_factor: demand_factor
     }}
   end
 
   @impl true
-  def handle_process(:input, %{payload: payload}, _context, %{ordered_lines: ordered_lines, last_processed_seq_id: last_processed_seq_id}=state) do
-    line = unzip_line(payload)
-    ordered_lines = [line | ordered_lines] |> Enum.sort()
-    state = Map.update!(state, :ordered_lines, fn _ -> ordered_lines end)
-    {last_seq_id, _} = Enum.at(ordered_lines, 0)
+  def handle_process(:input, %{payload: payload}, _context, %{ordered_packets: ordered_packets, last_processed_seq_id: last_processed_seq_id}=state) do
+    packet = unzip_packet(payload)
+    ordered_packets = [packet | ordered_packets] |> Enum.sort()
+    state = Map.update!(state, :ordered_packets, fn _ -> ordered_packets end)
+    {last_seq_id, _} = Enum.at(ordered_packets, 0)
     if last_processed_seq_id+1==last_seq_id do
-      reversed_ready_lines_sequence = get_ready_lines_sequence(ordered_lines, [])
-      {last_processed_seq_id, _} = Enum.at(reversed_ready_lines_sequence, 0)
-      ordered_lines = Enum.slice(ordered_lines, Range.new(length(reversed_ready_lines_sequence), length(ordered_lines)))
-      state = Map.update!(state, :ordered_lines, fn _ -> ordered_lines end)
+      reversed_ready_packets_sequence = get_ready_packets_sequence(ordered_packets, [])
+      {last_processed_seq_id, _} = Enum.at(reversed_ready_packets_sequence, 0)
+      ordered_packets = Enum.slice(ordered_packets, Range.new(length(reversed_ready_packets_sequence), length(ordered_packets)))
+      state = Map.update!(state, :ordered_packets, fn _ -> ordered_packets end)
       state = Map.update!(state, :last_processed_seq_id, fn _ -> last_processed_seq_id end)
-      ready_lines_sequence = Enum.reverse(reversed_ready_lines_sequence)
-      ready_lines_sequence = Enum.map(ready_lines_sequence, fn {_seq_id, data} -> data end)
-      buffers = ready_lines_sequence |> Enum.map(fn line -> %Membrane.Buffer{payload: line} end)
+      ready_packets_sequence = Enum.reverse(reversed_ready_packets_sequence)
+      ready_packets_sequence = Enum.map(ready_packets_sequence, fn {_seq_id, data} -> data end)
+      buffers = ready_packets_sequence |> Enum.map(fn packet -> %Membrane.Buffer{payload: packet} end)
       {{:ok, buffer: {:output, buffers}}, state}
     else
       {{:ok, redemand: :output}, state}
@@ -48,21 +48,21 @@ defmodule Basic.Elements.OrderingBuffer do
 
   end
 
-  defp get_ready_lines_sequence([], acc) do
+  defp get_ready_packets_sequence([], acc) do
     acc
   end
 
-  defp get_ready_lines_sequence([{first_id, _first_data}=first_seq | [{second_id, second_data} | rest]] , acc) when first_id+1==second_id do
-      get_ready_lines_sequence([{second_id, second_data} | rest], [first_seq | acc])
+  defp get_ready_packets_sequence([{first_id, _first_data}=first_seq | [{second_id, second_data} | rest]] , acc) when first_id+1==second_id do
+      get_ready_packets_sequence([{second_id, second_data} | rest], [first_seq | acc])
   end
 
-  defp get_ready_lines_sequence([first_seq | _rest], acc) do
+  defp get_ready_packets_sequence([first_seq | _rest], acc) do
     [ first_seq | acc ]
   end
 
-  defp unzip_line(line) do
+  defp unzip_packet(packet) do
     regex = ~r/^\[seq\:(?<seq_id>\d+)\](?<data>.*)$/
-    %{"data"=>data, "seq_id"=>seq_id} = Regex.named_captures(regex, line)
+    %{"data"=>data, "seq_id"=>seq_id} = Regex.named_captures(regex, packet)
     {String.to_integer(seq_id), data}
   end
 end
