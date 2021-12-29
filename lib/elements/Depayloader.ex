@@ -32,11 +32,6 @@ defmodule Basic.Elements.Depayloader do
     add_line(payload, state)
   end
 
-  def handle_other({:frame_ready, {timestamp, frame}}, _context, state) do
-    buffer = %Membrane.Buffer{payload: [{timestamp, frame}]}
-    {{:ok, buffer: {:output, buffer}}, state}
-  end
-
   defp add_line(line, %{frame: frame}=state) do
     regex = ~r/^\[frameid\:(?<frame_id>\d+(?<type>[s|e]*))\](?<data>.*)$/
     %{"data"=>data, "frame_id"=>_frame_id, "type"=>type} = Regex.named_captures(regex, line)
