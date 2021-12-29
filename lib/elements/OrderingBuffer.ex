@@ -1,4 +1,4 @@
-defmodule Basic.Elements.JitterBuffer do
+defmodule Basic.Elements.OrderingBuffer do
   use Membrane.Filter
 
   def_input_pad :input, demand_unit: :buffers, caps: {Basic.Format, type: :fragmented}

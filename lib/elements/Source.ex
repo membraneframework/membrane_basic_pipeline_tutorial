@@ -2,32 +2,25 @@ defmodule Basic.Elements.Source do
   use Membrane.Source
   alias Membrane.Buffer
 
-  def_options location: [type: :string, description: "Path to the file"],
-              range_start: [type: :integer, spec: pos_integer, description: "Number of the line from which the source starts reading"],
-              range_end: [type: :integer, spec: pos_integer, description: "Number of the line to which the source reads"]
+  def_options location: [type: :string, description: "Path to the file"]
 
-  def_output_pad :output, caps: :any
+  def_output_pad :output, caps: {Basic.Format, type: :fragmented}
 
   @impl true
-  def handle_init(%__MODULE__{location: location, range_start: range_start, range_end: range_end}) do
+  def handle_init(%__MODULE__{location: location}) do
     {:ok,
      %{
        location: location,
-       range_start: range_start,
-       range_end: range_end,
        content: nil
      }}
   end
 
   @impl true
-  def handle_stopped_to_prepared(_ctx, %{location: location, range_start: range_start, range_end: range_end} = state) do
+  def handle_stopped_to_prepared(_ctx, %{location: location} = state) do
     raw_file_binary = File.read!(location)
-    split_string = String.split(raw_file_binary, "\n")
-    content = split_string |> Enum.slice(range_start, range_start+range_end)
-    segment_ids_range = Enum.to_list(0..length(content)-1)
-    content_with_segment_ids = Enum.zip(segment_ids_range, content)
-    state = %{state | content: content_with_segment_ids}
-    {:ok, state}
+    content = String.split(raw_file_binary, "\n")
+    state = %{state | content: content}
+    { {:ok, [caps: {:output, %Basic.Format{type: :fragmented}}  ] }, state}
   end
 
   @impl true
@@ -63,10 +56,9 @@ defmodule Basic.Elements.Source do
   end
 
   defp supply_demand(size, %{content: content} = state) do
-    chosen = Enum.random(content)
-    content = content |> Enum.filter(fn line -> line != chosen end)
+    [chosen|rest] = content
+    content = rest
     state = %{state | content: content}
-
     {partial_result, state} = supply_demand(size-1, state)
     result = [ chosen | partial_result ]
     {result, state}

@@ -3,12 +3,10 @@ defmodule InputFilesGenerator do
   def generate(input_location, output_name) do
     raw_file_binary = File.read!(input_location)
     content = String.split(raw_file_binary, "\n")
-    content = for line <- content do
-      String.split(line, " ")
-    end
+    content = Enum.map(content, &(String.split(&1, " ")))
     content = Enum.zip(content, Range.new(1, length(content)) )
-    first_speaker_content = Enum.filter(content, fn {_line, no} -> rem(no, 2)!=0 end)
-    second_speaker_content = Enum.filter(content, fn {_line, no} -> rem(no, 2)==0 end)
+    first_speaker_content = Enum.filter(content, fn {_words_list, no} -> rem(no, 2)!=0 end)
+    second_speaker_content = Enum.filter(content, fn {_words_list, no} -> rem(no, 2)==0 end)
 
 
     first_speaker_content = prepare_sequence(first_speaker_content)
