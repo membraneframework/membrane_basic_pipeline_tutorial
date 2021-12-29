@@ -30,38 +30,21 @@ defmodule Basic.Elements.Source do
   end
 
   @impl true
-  def handle_demand(:output, 0, :buffers, _ctx, _state), do: []
+  def handle_demand(:output, 0, :buffers, _ctx, state) do
+    {:ok, state}
+  end
 
   @impl true
   def handle_demand(:output, size, :buffers, _ctx, %{content: content}=state) do
-    if  length(content) >= size do
-      if length(content)==0 do
-        {{:ok, end_of_stream: :output}, state}
-      else
-        {result, state} = supply_demand(size, state)
-        action = [buffer: {:output, %Buffer{payload: result}}]
-        {{:ok, action}, state}
-      end
+    if content == [] do
+      {{:ok, end_of_stream: :output}, state}
     else
-      {result, state} = supply_demand(length(content), state)
-      action = [buffer: {:output, %Buffer{payload: result}}]
+      [chosen|rest] = content
+      state = %{state | content: rest}
+      action = [buffer: {:output, %Buffer{payload: chosen}}, redemand: :output]
+      action = if size > 1, do: action++[redemand: :output], else: action
       {{:ok, action}, state}
     end
-  end
-
-
-
-  defp supply_demand(0, state) do
-    {[], state}
-  end
-
-  defp supply_demand(size, %{content: content} = state) do
-    [chosen|rest] = content
-    content = rest
-    state = %{state | content: content}
-    {partial_result, state} = supply_demand(size-1, state)
-    result = [ chosen | partial_result ]
-    {result, state}
   end
 
 end

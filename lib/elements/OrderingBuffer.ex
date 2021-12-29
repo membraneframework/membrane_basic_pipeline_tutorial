@@ -28,26 +28,24 @@ defmodule Basic.Elements.OrderingBuffer do
 
   @impl true
   def handle_process(:input, %{payload: payload}, _context, %{ordered_lines: ordered_lines, last_processed_seq_id: last_processed_seq_id}=state) do
-    ordered_lines = do_handle_process(payload, ordered_lines)
+    line = unzip_line(payload)
+    ordered_lines = [line | ordered_lines] |> Enum.sort()
     state = Map.update!(state, :ordered_lines, fn _ -> ordered_lines end)
-    if ordered_lines == [] do
-      {{:ok, redemand: :output}, state}
+    {last_seq_id, _} = Enum.at(ordered_lines, 0)
+    if last_processed_seq_id+1==last_seq_id do
+      reversed_ready_lines_sequence = get_ready_lines_sequence(ordered_lines, [])
+      {last_processed_seq_id, _} = Enum.at(reversed_ready_lines_sequence, 0)
+      ordered_lines = Enum.slice(ordered_lines, Range.new(length(reversed_ready_lines_sequence), length(ordered_lines)))
+      state = Map.update!(state, :ordered_lines, fn _ -> ordered_lines end)
+      state = Map.update!(state, :last_processed_seq_id, fn _ -> last_processed_seq_id end)
+      ready_lines_sequence = Enum.reverse(reversed_ready_lines_sequence)
+      ready_lines_sequence = Enum.map(ready_lines_sequence, fn {_seq_id, data} -> data end)
+      buffers = ready_lines_sequence |> Enum.map(fn line -> %Membrane.Buffer{payload: line} end)
+      {{:ok, buffer: {:output, buffers}}, state}
     else
-      {last_seq_id, _} = Enum.at(ordered_lines, 0)
-      if last_processed_seq_id+1==last_seq_id do
-        reversed_ready_lines_sequence = get_ready_lines_sequence(ordered_lines, [])
-        {last_processed_seq_id, _} = Enum.at(reversed_ready_lines_sequence, 0)
-        ordered_lines = Enum.slice(ordered_lines, Range.new(length(reversed_ready_lines_sequence), length(ordered_lines)))
-        state = Map.update!(state, :ordered_lines, fn _ -> ordered_lines end)
-        state = Map.update!(state, :last_processed_seq_id, fn _ -> last_processed_seq_id end)
-        ready_lines_sequence = Enum.reverse(reversed_ready_lines_sequence)
-        ready_lines_sequence = Enum.map(ready_lines_sequence, fn {_seq_id, data} -> data end)
-        buffer = %Membrane.Buffer{payload: ready_lines_sequence}
-        {{:ok, buffer: {:output, buffer}}, state}
-      else
-        {{:ok, redemand: :output}, state}
-      end
+      {{:ok, redemand: :output}, state}
     end
+
   end
 
   defp get_ready_lines_sequence([], acc) do
@@ -60,17 +58,6 @@ defmodule Basic.Elements.OrderingBuffer do
 
   defp get_ready_lines_sequence([first_seq | _rest], acc) do
     [ first_seq | acc ]
-  end
-
-  def do_handle_process([], acc) do
-    acc
-  end
-
-  def do_handle_process([ line | rest], ordered_lines) do
-    unziped_line = unzip_line(line)
-    ordered_lines = [unziped_line | ordered_lines]
-    ordered_lines = ordered_lines |> Enum.sort()
-    do_handle_process(rest, ordered_lines)
   end
 
   defp unzip_line(line) do

@@ -32,7 +32,7 @@ defmodule Basic.Elements.Sink do
 
   @impl true
   def handle_write(:input, %Buffer{payload: payload}, _ctx, %{location: location}=state) do
-    for text <- payload, do: File.write!(location, text<>"\n", [:append])
+    File.write!(location, payload<>"\n", [:append])
     {{:ok, demand: {:input, 10}}, state}
 
   end

@@ -17,7 +17,8 @@ defmodule Basic.Elements.Mixer do
     %{
       ordered_frames: [],
       last_sent_frame_timestamp: 0,
-      demand_factor: demand_factor
+      demand_factor: demand_factor,
+      how_many_streams_ended: 0
     }}
   end
 
@@ -28,8 +29,18 @@ defmodule Basic.Elements.Mixer do
   end
 
   @impl true
-  def handle_process(_pad, %{payload: payload}, _context, %{ordered_frames: ordered_frames, last_sent_frame_timestamp: last_sent_frame_timestamp}=state) do
-    ordered_frames = do_handle_process(payload, ordered_frames)
+  def handle_end_of_stream(_pad, _context, state) do
+    state = Map.update!(state, :how_many_streams_ended, fn n -> n+1 end)
+    how_many_streams_ended = Map.get(state, :how_many_streams_ended)
+    actions = if how_many_streams_ended==2 do [end_of_stream: :output] else [] end
+    {{:ok, actions}, state}
+  end
+
+
+  @impl true
+  def handle_process(_pad, %{payload: frame, pts: timestamp}, _context, %{ordered_frames: ordered_frames, last_sent_frame_timestamp: last_sent_frame_timestamp}=state) do
+    IO.puts("FRAME: #{inspect(frame)}")
+    ordered_frames = [{timestamp, frame} | ordered_frames] |> Enum.sort()
     state = Map.update!(state, :ordered_frames, fn _ -> ordered_frames end)
     {timestamp, _frame} = Enum.at(ordered_frames, 0)
     if last_sent_frame_timestamp+1==timestamp do
@@ -41,7 +52,8 @@ defmodule Basic.Elements.Mixer do
       state = Map.update!(state, :last_sent_frame_timestamp, fn _ -> last_timestamp end)
       ready_frames_sequence = Enum.reverse(reversed_ready_frames_sequence)
       ready_frames_sequence = Enum.map(ready_frames_sequence, fn {_timestamp, frame}-> frame end)
-      buffer = %Membrane.Buffer{payload: ready_frames_sequence}
+      concatenated_frames = ready_frames_sequence |> Enum.join("\n")
+      buffer = %Membrane.Buffer{payload: concatenated_frames}
       {{:ok, buffer: {:output, buffer}}, state}
     else
       {{:ok, redemand: :output}, state}
@@ -59,16 +71,6 @@ defmodule Basic.Elements.Mixer do
 
   defp get_ready_frames_sequence([frame | _rest], acc) do
     [ frame| acc ]
-  end
-
-  def do_handle_process([], acc) do
-    acc
-  end
-
-  def do_handle_process([ {timestamp, frame} | rest], ordered_frames) do
-    ordered_frames = [ {timestamp, frame} | ordered_frames]
-    ordered_frames = ordered_frames |> Enum.sort()
-    do_handle_process(rest, ordered_frames)
   end
 
 end

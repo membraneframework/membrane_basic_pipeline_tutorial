@@ -29,27 +29,12 @@ defmodule Basic.Elements.Depayloader do
 
   @impl true
   def handle_process(_ref, %Membrane.Buffer{payload: payload}, _ctx, state) do
-    state = do_handle_process(payload, state)
-    {:ok, state}
+    add_line(payload, state)
   end
 
   def handle_other({:frame_ready, {timestamp, frame}}, _context, state) do
     buffer = %Membrane.Buffer{payload: [{timestamp, frame}]}
     {{:ok, buffer: {:output, buffer}}, state}
-  end
-
-  def handle_other({:redemand}, _context, state) do
-    {{:ok, redemand: :output}, state}
-  end
-
-  defp do_handle_process([], state) do
-    state
-  end
-
-  defp do_handle_process([line | rest], state) do
-    state = add_line(line, state)
-    state = do_handle_process(rest, state)
-    state
   end
 
   defp add_line(line, %{frame: frame}=state) do
@@ -58,14 +43,13 @@ defmodule Basic.Elements.Depayloader do
     case type do
       "e" ->
         frame = [data | frame]
-        prepare_frame(Enum.reverse(frame))
-        Map.update!(state, :frame, fn _ -> [] end)
-
+        actions = prepare_frame(Enum.reverse(frame))
+        state = Map.update!(state, :frame, fn _ -> [] end)
+        {{:ok, actions}, state}
       _  ->
         frame = [data | frame]
-        send(self(), {:redemand})
-        Map.update!(state, :frame, fn _ -> frame end)
-
+        state = Map.update!(state, :frame, fn _ -> frame end)
+        {{:ok, redemand: :output}, state}
     end
   end
 
@@ -78,8 +62,9 @@ defmodule Basic.Elements.Depayloader do
     {timestamp, _} = Enum.at(lines_without_frameid, 0)
     lines_without_timestamp = Enum.map(lines_without_frameid, fn {_timestamp, data} -> data end)
 
-    concatenated_lines = lines_without_timestamp |> Enum.join(" ")
-    send(self(), {:frame_ready, {String.to_integer(timestamp), concatenated_lines}})
+    frame = lines_without_timestamp |> Enum.join(" ")
+    buffer = %Membrane.Buffer{payload: frame, pts: String.to_integer(timestamp)}
+    [buffer: {:output, buffer}]
   end
 
 end
