@@ -1,8 +1,8 @@
 defmodule Basic.Elements.OrderingBuffer do
   use Membrane.Filter
 
-  def_input_pad :input, demand_unit: :buffers, caps: {Basic.Format, type: :fragmented}
-  def_output_pad :output, caps: {Basic.Format, type: :ordered}
+  def_input_pad :input, demand_unit: :buffers, caps: {Basic.Formats.Packet, type: :custom_packets}
+  def_output_pad :output, caps: {Basic.Formats.Packet, type: :custom_packets}
   def_options demand_factor: [type: :integer, spec: pos_integer, description: "Demand Factor"]
 
   @impl true
@@ -10,11 +10,6 @@ defmodule Basic.Elements.OrderingBuffer do
     {{:ok, demand: {Pad.ref(:input), demand_factor*size}}, state}
   end
 
-  @impl true
-  def handle_caps(_pad, _caps, _context, state) do
-    caps = %Basic.Format{type: :ordered}
-    {{:ok, caps: {:output, caps} }, state}
-  end
 
   @impl true
   def handle_init(%__MODULE__{demand_factor: demand_factor}) do

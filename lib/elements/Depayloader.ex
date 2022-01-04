@@ -1,8 +1,8 @@
 defmodule Basic.Elements.Depayloader do
   use Membrane.Filter
 
-  def_input_pad :input, demand_unit: :buffers, caps: {Basic.Format, type: :ordered}
-  def_output_pad :output, caps: {Basic.Format, type: :frame}
+  def_input_pad :input, demand_unit: :buffers, caps: {Basic.Formats.Packet, type: :custom_packets}
+  def_output_pad :output, caps: {Basic.Formats.Frame, encoding: :utf8}
   def_options demand_factor: [type: :integer, spec: pos_integer, description: "Demand Factor"]
 
 
@@ -18,7 +18,7 @@ defmodule Basic.Elements.Depayloader do
 
   @impl true
   def handle_caps(_pad, _caps, _context, state) do
-    caps = %Basic.Format{type: :frame}
+    caps = %Basic.Formats.Frame{encoding: :utf8}
     {{:ok, caps: {:output, caps} }, state}
   end
 

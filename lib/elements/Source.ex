@@ -4,7 +4,7 @@ defmodule Basic.Elements.Source do
 
   def_options location: [type: :string, description: "Path to the file"]
 
-  def_output_pad :output, caps: {Basic.Format, type: :fragmented}
+  def_output_pad :output, [caps: {Basic.Formats.Packet, type: :custom_packets}, mode: :pull]
 
   @impl true
   def handle_init(%__MODULE__{location: location}) do
@@ -20,7 +20,7 @@ defmodule Basic.Elements.Source do
     raw_file_binary = File.read!(location)
     content = String.split(raw_file_binary, "\n")
     state = %{state | content: content}
-    { {:ok, [caps: {:output, %Basic.Format{type: :fragmented}}  ] }, state}
+    { {:ok, [caps: {:output, %Basic.Formats.Packet{type: :custom_packets}}  ] }, state}
   end
 
   @impl true
@@ -41,7 +41,7 @@ defmodule Basic.Elements.Source do
     else
       [chosen|rest] = content
       state = %{state | content: rest}
-      action = [buffer: {:output, %Buffer{payload: chosen}}, redemand: :output]
+      action = [buffer: {:output, %Buffer{payload: chosen}}]
       action = if size > 1, do: action++[redemand: :output], else: action
       {{:ok, action}, state}
     end

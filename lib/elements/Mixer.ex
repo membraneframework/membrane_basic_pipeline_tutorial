@@ -1,9 +1,9 @@
 defmodule Basic.Elements.Mixer do
   use Membrane.Filter
 
-  def_input_pad :first_input, demand_unit: :buffers, caps: {Basic.Format, type: :frame}
-  def_input_pad :second_input, demand_unit: :buffers, caps: {Basic.Format, type: :frame}
-  def_output_pad :output, caps: {Basic.Format, type: :frames_sequence}
+  def_input_pad :first_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8}
+  def_input_pad :second_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8}
+  def_output_pad :output, caps: {Basic.Formats.Frame, encoding: :utf8}
   def_options demand_factor: [type: :integer, spec: pos_integer, description: "Demand factor"]
 
   @impl true
@@ -22,11 +22,6 @@ defmodule Basic.Elements.Mixer do
     }}
   end
 
-  @impl true
-  def handle_caps(_pad, _caps, _context, state) do
-    caps = %Basic.Format{type: :frames_sequence}
-    {{:ok, caps: {:output, caps} }, state}
-  end
 
   @impl true
   def handle_end_of_stream(_pad, _context, state) do
