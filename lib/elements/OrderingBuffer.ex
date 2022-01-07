@@ -4,36 +4,36 @@ defmodule Basic.Elements.OrderingBuffer do
   def_input_pad(:input, demand_unit: :buffers, caps: {Basic.Formats.Packet, type: :custom_packets})
 
   def_output_pad(:output, caps: {Basic.Formats.Packet, type: :custom_packets})
-  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Demand Factor"])
+  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Positive integer, describing how much input buffers should be requested per each output buffer"])
 
   @impl true
-  def handle_demand(_ref, size, _unit, _ctx, %{demand_factor: demand_factor} = state) do
-    {{:ok, demand: {Pad.ref(:input), demand_factor * size}}, state}
+  def handle_demand(_ref, size, _unit, _ctx, state) do
+    {{:ok, demand: {Pad.ref(:input), state.demand_factor * size}}, state}
   end
 
   @impl true
-  def handle_init(%__MODULE__{demand_factor: demand_factor}) do
+  def handle_init(options) do
     {:ok,
      %{
        ordered_packets: [],
        last_processed_seq_id: 0,
-       demand_factor: demand_factor
+       demand_factor: options.demand_factor
      }}
   end
 
   @impl true
   def handle_process(
         :input,
-        %{payload: payload},
+        buffer,
         _context,
-        %{ordered_packets: ordered_packets, last_processed_seq_id: last_processed_seq_id} = state
+        state
       ) do
-    packet = unzip_packet(payload)
-    ordered_packets = [packet | ordered_packets] |> Enum.sort()
-    state = Map.update!(state, :ordered_packets, fn _ -> ordered_packets end)
+    packet = unzip_packet(buffer.payload)
+    ordered_packets = [packet | state.ordered_packets] |> Enum.sort()
+    state = Map.put(state, :ordered_packets, ordered_packets)
     {last_seq_id, _} = Enum.at(ordered_packets, 0)
 
-    if last_processed_seq_id + 1 == last_seq_id do
+    if state.last_processed_seq_id + 1 == last_seq_id do
       reversed_ready_packets_sequence = get_ready_packets_sequence(ordered_packets, [])
       {last_processed_seq_id, _} = Enum.at(reversed_ready_packets_sequence, 0)
 
@@ -43,8 +43,8 @@ defmodule Basic.Elements.OrderingBuffer do
           Range.new(length(reversed_ready_packets_sequence), length(ordered_packets))
         )
 
-      state = Map.update!(state, :ordered_packets, fn _ -> ordered_packets end)
-      state = Map.update!(state, :last_processed_seq_id, fn _ -> last_processed_seq_id end)
+      state = Map.put(state, :ordered_packets, ordered_packets)
+      state = Map.put(state, :last_processed_seq_id, last_processed_seq_id)
       ready_packets_sequence = Enum.reverse(reversed_ready_packets_sequence)
       ready_packets_sequence = Enum.map(ready_packets_sequence, fn {_seq_id, data} -> data end)
 

@@ -6,7 +6,7 @@ defmodule Basic.Elements.Mixer do
   def_input_pad(:second_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8})
 
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
-  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Demand factor"])
+  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Positive integer, describing how much input buffers should be requested per each output buffer"])
 
   @impl true
   def handle_demand(_ref, 0, _unit, _ctx, state) do
@@ -15,17 +15,17 @@ defmodule Basic.Elements.Mixer do
 
   @impl true
   def handle_demand(_ref, size, _unit, _ctx, state) do
-    {{:ok, [demand: {:first_input, size}, demand: {:second_input, size}]}, state}
+    {{:ok, [demand: {:first_input, state.demand_factor*size}, demand: {:second_input, state.demand_factor*size}]}, state}
   end
 
   @impl true
-  def handle_init(%__MODULE__{demand_factor: demand_factor}) do
+  def handle_init(options) do
     {:ok,
      %{
        tracks_statuses: %{first_input: :ready, second_input: :ready},
        tracks_buffers: %{first_input: [], second_input: []},
        last_sent_frame_timestamp: 0,
-       demand_factor: demand_factor
+       demand_factor: options.demand_factor
      }}
   end
 

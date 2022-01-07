@@ -4,14 +4,14 @@ defmodule Basic.Elements.Depayloader do
   def_input_pad(:input, demand_unit: :buffers, caps: {Basic.Formats.Packet, type: :custom_packets})
 
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
-  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Demand Factor"])
+  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Positive integer, describing how much input buffers should be requested per each output buffer"])
 
   @impl true
-  def handle_init(%__MODULE__{demand_factor: demand_factor}) do
+  def handle_init(options) do
     {:ok,
      %{
        frame: [],
-       demand_factor: demand_factor
+       demand_factor: options.demand_factor
      }}
   end
 
@@ -22,31 +22,27 @@ defmodule Basic.Elements.Depayloader do
   end
 
   @impl true
-  def handle_demand(_ref, size, _unit, _ctx, %{demand_factor: demand_factor} = state) do
-    {{:ok, demand: {Pad.ref(:input), size * demand_factor}}, state}
+  def handle_demand(_ref, size, _unit, _ctx, state) do
+    {{:ok, demand: {Pad.ref(:input), size * state.demand_factor}}, state}
   end
 
   @impl true
-  def handle_process(_ref, %Membrane.Buffer{payload: payload}, _ctx, state) do
-    add_packet(payload, state)
-  end
-
-  defp add_packet(packet, %{frame: frame} = state) do
+  def handle_process(_ref, buffer, _ctx, state) do
+    packet = buffer.payload
     regex = ~r/^\[frameid\:(?<frame_id>\d+(?<type>[s|e]*))\](?<data>.*)$/
 
     %{"data" => data, "frame_id" => _frame_id, "type" => type} =
       Regex.named_captures(regex, packet)
 
+    frame = [data | state.frame]
     case type do
       "e" ->
-        frame = [data | frame]
         actions = prepare_frame(Enum.reverse(frame))
-        state = Map.update!(state, :frame, fn _ -> [] end)
+        state = Map.put(state, :frame, [])
         {{:ok, actions}, state}
 
       _ ->
-        frame = [data | frame]
-        state = Map.update!(state, :frame, fn _ -> frame end)
+        state = Map.put(state, :frame, frame)
         {{:ok, redemand: :output}, state}
     end
   end

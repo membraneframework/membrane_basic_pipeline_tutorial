@@ -7,10 +7,10 @@ defmodule Basic.Elements.Sink do
   def_input_pad(:input, demand_unit: :buffers, caps: :any)
 
   @impl true
-  def handle_init(%__MODULE__{location: location}) do
+  def handle_init(options) do
     {:ok,
      %{
-       location: location
+       location: options.location
      }}
   end
 
@@ -30,8 +30,8 @@ defmodule Basic.Elements.Sink do
   end
 
   @impl true
-  def handle_write(:input, %Buffer{payload: payload}, _ctx, %{location: location} = state) do
-    File.write!(location, payload <> "\n", [:append])
+  def handle_write(:input, buffer, _ctx, state) do
+    File.write!(state.location, buffer.payload <> "\n", [:append])
     {{:ok, demand: {:input, 10}}, state}
   end
 end

@@ -6,10 +6,8 @@ defmodule InputFilesGenerator do
     content = Enum.zip(content, Range.new(1, length(content)))
     first_speaker_content = Enum.filter(content, fn {_words_list, no} -> rem(no, 2) != 0 end)
     second_speaker_content = Enum.filter(content, fn {_words_list, no} -> rem(no, 2) == 0 end)
-
     first_speaker_content = prepare_sequence(first_speaker_content)
     second_speaker_content = prepare_sequence(second_speaker_content)
-
     File.write!(output_name <> "1.txt", first_speaker_content)
     File.write!(output_name <> "2.txt", second_speaker_content)
   end

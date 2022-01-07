@@ -7,17 +7,17 @@ defmodule Basic.Elements.Source do
   def_output_pad(:output, caps: {Basic.Formats.Packet, type: :custom_packets}, mode: :pull)
 
   @impl true
-  def handle_init(%__MODULE__{location: location}) do
+  def handle_init(options) do
     {:ok,
      %{
-       location: location,
+       location: options.location,
        content: nil
      }}
   end
 
   @impl true
-  def handle_stopped_to_prepared(_ctx, %{location: location} = state) do
-    raw_file_binary = File.read!(location)
+  def handle_stopped_to_prepared(_ctx, state) do
+    raw_file_binary = File.read!(state.location)
     content = String.split(raw_file_binary, "\n")
     state = %{state | content: content}
     {{:ok, [caps: {:output, %Basic.Formats.Packet{type: :custom_packets}}]}, state}
@@ -35,11 +35,11 @@ defmodule Basic.Elements.Source do
   end
 
   @impl true
-  def handle_demand(:output, size, :buffers, _ctx, %{content: content} = state) do
-    if content == [] do
+  def handle_demand(:output, size, :buffers, _ctx, state) do
+    if state.content == [] do
       {{:ok, end_of_stream: :output}, state}
     else
-      [chosen | rest] = content
+      [chosen | rest] = state.content
       state = %{state | content: rest}
       action = [buffer: {:output, %Buffer{payload: chosen}}]
       action = if size > 1, do: action ++ [redemand: :output], else: action
