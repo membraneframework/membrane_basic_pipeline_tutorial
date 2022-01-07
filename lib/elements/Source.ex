@@ -2,9 +2,9 @@ defmodule Basic.Elements.Source do
   use Membrane.Source
   alias Membrane.Buffer
 
-  def_options location: [type: :string, description: "Path to the file"]
+  def_options(location: [type: :string, description: "Path to the file"])
 
-  def_output_pad :output, [caps: {Basic.Formats.Packet, type: :custom_packets}, mode: :pull]
+  def_output_pad(:output, caps: {Basic.Formats.Packet, type: :custom_packets}, mode: :pull)
 
   @impl true
   def handle_init(%__MODULE__{location: location}) do
@@ -20,7 +20,7 @@ defmodule Basic.Elements.Source do
     raw_file_binary = File.read!(location)
     content = String.split(raw_file_binary, "\n")
     state = %{state | content: content}
-    { {:ok, [caps: {:output, %Basic.Formats.Packet{type: :custom_packets}}  ] }, state}
+    {{:ok, [caps: {:output, %Basic.Formats.Packet{type: :custom_packets}}]}, state}
   end
 
   @impl true
@@ -35,16 +35,15 @@ defmodule Basic.Elements.Source do
   end
 
   @impl true
-  def handle_demand(:output, size, :buffers, _ctx, %{content: content}=state) do
+  def handle_demand(:output, size, :buffers, _ctx, %{content: content} = state) do
     if content == [] do
       {{:ok, end_of_stream: :output}, state}
     else
-      [chosen|rest] = content
+      [chosen | rest] = content
       state = %{state | content: rest}
       action = [buffer: {:output, %Buffer{payload: chosen}}]
-      action = if size > 1, do: action++[redemand: :output], else: action
+      action = if size > 1, do: action ++ [redemand: :output], else: action
       {{:ok, action}, state}
     end
   end
-
 end

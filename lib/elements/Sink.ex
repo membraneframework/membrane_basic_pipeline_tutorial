@@ -2,10 +2,9 @@ defmodule Basic.Elements.Sink do
   use Membrane.Sink
   alias Membrane.Buffer
 
-  def_options location: [type: :string, description: "Path to the file"]
+  def_options(location: [type: :string, description: "Path to the file"])
 
-  def_input_pad :input, demand_unit: :buffers, caps: :any
-
+  def_input_pad(:input, demand_unit: :buffers, caps: :any)
 
   @impl true
   def handle_init(%__MODULE__{location: location}) do
@@ -31,10 +30,8 @@ defmodule Basic.Elements.Sink do
   end
 
   @impl true
-  def handle_write(:input, %Buffer{payload: payload}, _ctx, %{location: location}=state) do
-    File.write!(location, payload<>"\n", [:append])
+  def handle_write(:input, %Buffer{payload: payload}, _ctx, %{location: location} = state) do
+    File.write!(location, payload <> "\n", [:append])
     {{:ok, demand: {:input, 10}}, state}
-
   end
-
 end

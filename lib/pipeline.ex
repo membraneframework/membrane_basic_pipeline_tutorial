@@ -1,5 +1,4 @@
 defmodule Basic.Pipeline do
-
   use Membrane.Pipeline
 
   @impl true
@@ -8,11 +7,9 @@ defmodule Basic.Pipeline do
       input1: %Basic.Elements.Source{location: "input1.txt"},
       ordering_buffer1: %Basic.Elements.OrderingBuffer{demand_factor: 1},
       depayloader1: %Basic.Elements.Depayloader{demand_factor: 5},
-
       input2: %Basic.Elements.Source{location: "input2.txt"},
       ordering_buffer2: %Basic.Elements.OrderingBuffer{demand_factor: 1},
       depayloader2: %Basic.Elements.Depayloader{demand_factor: 5},
-
       mixer: %Basic.Elements.Mixer{demand_factor: 1},
       output: %Basic.Elements.Sink{location: "output.txt"}
     }
@@ -29,5 +26,4 @@ defmodule Basic.Pipeline do
 
     {{:ok, spec: spec}, %{}}
   end
-
 end

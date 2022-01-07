@@ -1,11 +1,12 @@
 defmodule Basic.Elements.Mixer do
   use Membrane.Filter
 
-  def_input_pad :first_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8}
-  def_input_pad :second_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8}
-  def_output_pad :output, caps: {Basic.Formats.Frame, encoding: :utf8}
-  def_options demand_factor: [type: :integer, spec: pos_integer, description: "Demand factor"]
+  def_input_pad(:first_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8})
 
+  def_input_pad(:second_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8})
+
+  def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
+  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Demand factor"])
 
   @impl true
   def handle_demand(_ref, 0, _unit, _ctx, state) do
@@ -17,28 +18,27 @@ defmodule Basic.Elements.Mixer do
     {{:ok, [demand: {:first_input, size}, demand: {:second_input, size}]}, state}
   end
 
-
-
   @impl true
   def handle_init(%__MODULE__{demand_factor: demand_factor}) do
     {:ok,
-    %{
-      tracks_statuses: %{first_input: :ready, second_input: :ready},
-      tracks_buffers: %{first_input: [], second_input: []},
-      last_sent_frame_timestamp: 0,
-      demand_factor: demand_factor
-    }}
+     %{
+       tracks_statuses: %{first_input: :ready, second_input: :ready},
+       tracks_buffers: %{first_input: [], second_input: []},
+       last_sent_frame_timestamp: 0,
+       demand_factor: demand_factor
+     }}
   end
-
 
   @impl true
   def handle_end_of_stream(pad, _context, state) do
-    state = if Map.get(state.tracks_buffers, pad) == [] do
-      Map.put(state, :tracks_statuses, Map.put(state.tracks_statuses, pad, :processed))
-    else
-      Map.put(state, :tracks_statuses, Map.put(state.tracks_statuses, pad, :stream_ended))
-    end
-    do_handle_process(state)
+    state =
+      if Map.get(state.tracks_buffers, pad) == [] do
+        Map.put(state, :tracks_statuses, Map.put(state.tracks_statuses, pad, :processed))
+      else
+        Map.put(state, :tracks_statuses, Map.put(state.tracks_statuses, pad, :stream_ended))
+      end
+
+    prepare_buffers(state)
   end
 
   @impl true
@@ -46,40 +46,54 @@ defmodule Basic.Elements.Mixer do
     buffers = Map.get(state.tracks_buffers, pad)
     buffers = [buffer | buffers]
     state = Map.put(state, :tracks_buffers, Map.put(state.tracks_buffers, pad, buffers))
-    do_handle_process(state)
+    prepare_buffers(state)
   end
 
-  defp do_handle_process(state) do
-    tracks_buffers = Enum.filter(state.tracks_buffers, fn {key, _value} -> Map.get(state.tracks_statuses, key) != :processed  end)
-    IO.puts("TRACKS BUFFERS: #{inspect(tracks_buffers)}")
-    if tracks_buffers != [] and Enum.all?(tracks_buffers, fn {_key, value}->value != [] end) do
-      frames_with_lowest_timestamps = Enum.map(tracks_buffers, fn {key, ordered_frames_list} -> {key, List.last(ordered_frames_list)} end)
-      IO.puts("FRAMES_WITH_LOWEST: #{inspect(frames_with_lowest_timestamps)}")
-      {key, frame_buffer} = Enum.min_by(frames_with_lowest_timestamps, fn {_key, frame_buffer} -> frame_buffer.pts end)
+  defp prepare_buffers(state) do
+    tracks_buffers =
+      Enum.filter(state.tracks_buffers, fn {key, _value} ->
+        Map.get(state.tracks_statuses, key) != :processed
+      end)
+
+    if tracks_buffers != [] and Enum.all?(tracks_buffers, fn {_key, value} -> value != [] end) do
+      frames_with_lowest_timestamps =
+        Enum.map(tracks_buffers, fn {key, ordered_frames_list} ->
+          {key, List.last(ordered_frames_list)}
+        end)
+
+      {key, frame_buffer} =
+        Enum.min_by(frames_with_lowest_timestamps, fn {_key, frame_buffer} -> frame_buffer.pts end)
 
       frames_buffer = Map.get(state.tracks_buffers, key)
-      IO.puts("BEFORE: #{inspect(frames_buffer)}")
-      {_, frames_buffer} = List.pop_at(frames_buffer, length(frames_buffer)-1)
+      {_, frames_buffer} = List.pop_at(frames_buffer, length(frames_buffer) - 1)
 
-      IO.puts("AFTER: #{inspect(frames_buffer)}")
       state = Map.put(state, :tracks_buffers, Map.put(state.tracks_buffers, key, frames_buffer))
-      state = if Map.get(state.tracks_statuses, key) == :stream_ended and frames_buffer == [] do
-        Map.put(state, :tracks_statuses, Map.put(state.tracks_statuses, key, :processed))
-      else
-        state
-      end
 
+      state =
+        if Map.get(state.tracks_statuses, key) == :stream_ended and frames_buffer == [] do
+          Map.put(state, :tracks_statuses, Map.put(state.tracks_statuses, key, :processed))
+        else
+          state
+        end
 
       actions = [buffer: {:output, frame_buffer}]
-      #actions = if size > 1, do: actions++[{:redemand, :output}], else: actions
-      actions = if Enum.all?(state.tracks_statuses, fn {_key, value}->value == :processed end) do actions++[end_of_stream: :output] else actions end
-      IO.puts("ACTIONS: #{inspect(actions)}")
-      {{:ok, nested_actions}, state} = do_handle_process(state)
-      {{:ok, actions++nested_actions}, state}
+
+      actions =
+        if Enum.all?(state.tracks_statuses, fn {_key, value} -> value == :processed end) do
+          actions ++ [end_of_stream: :output]
+        else
+          actions
+        end
+
+      {{:ok, nested_actions}, state} = prepare_buffers(state)
+      {{:ok, actions ++ nested_actions}, state}
     else
-      actions = tracks_buffers |> Enum.filter(fn {_key, value}-> value==[] end) |> Enum.map(fn {key, _value}-> {:demand, {Pad.ref(key), 1} } end)
+      actions =
+        tracks_buffers
+        |> Enum.filter(fn {_key, value} -> value == [] end)
+        |> Enum.map(fn {key, _value} -> {:demand, {Pad.ref(key), 1}} end)
+
       {{:ok, actions}, state}
     end
   end
-
 end
