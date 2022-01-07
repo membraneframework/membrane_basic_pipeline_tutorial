@@ -29,15 +29,15 @@ defmodule Basic.Elements.Depayloader do
   @impl true
   def handle_process(_ref, buffer, _ctx, state) do
     packet = buffer.payload
-    regex = ~r/^\[frameid\:(?<frame_id>\d+(?<type>[s|e]*))\](?<data>.*)$/
+    regex = ~r/^\[frameid\:(?<frame_id>\d+(?<type>[s|e]*))\]\[timestamp\:(?<timestamp>\d+)\](?<data>.*)$/
 
-    %{"data" => data, "frame_id" => _frame_id, "type" => type} =
+    %{"data" => data, "frame_id" => _frame_id, "type" => type, "timestamp"=>timestamp} =
       Regex.named_captures(regex, packet)
 
     frame = [data | state.frame]
     case type do
       "e" ->
-        actions = prepare_frame(Enum.reverse(frame))
+        actions = prepare_frame(Enum.reverse(frame), timestamp)
         state = Map.put(state, :frame, [])
         {{:ok, actions}, state}
 
@@ -47,21 +47,9 @@ defmodule Basic.Elements.Depayloader do
     end
   end
 
-  defp prepare_frame(frame) do
-    regex = ~r/^\[timestamp\:(?<timestamp>\d+)\](?<data>.*)$/
-
-    packets_without_frameid =
-      for packet <- frame do
-        %{"data" => data, "timestamp" => timestamp} = Regex.named_captures(regex, packet)
-        {timestamp, data}
-      end
-
-    {timestamp, _} = Enum.at(packets_without_frameid, 0)
-
-    packets_without_timestamp =
-      Enum.map(packets_without_frameid, fn {_timestamp, data} -> data end)
-
-    frame = packets_without_timestamp |> Enum.join(" ")
+  defp prepare_frame(frame, timestamp) do
+    IO.puts("#{inspect(frame)}, #{timestamp}")
+    frame = frame |> Enum.join(" ")
     buffer = %Membrane.Buffer{payload: frame, pts: String.to_integer(timestamp)}
     [buffer: {:output, buffer}]
   end
