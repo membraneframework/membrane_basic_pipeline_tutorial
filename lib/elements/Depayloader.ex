@@ -4,7 +4,15 @@ defmodule Basic.Elements.Depayloader do
   def_input_pad(:input, demand_unit: :buffers, caps: {Basic.Formats.Packet, type: :custom_packets})
 
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
-  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Positive integer, describing how much input buffers should be requested per each output buffer"])
+
+  def_options(
+    demand_factor: [
+      type: :integer,
+      spec: pos_integer,
+      description:
+        "Positive integer, describing how much input buffers should be requested per each output buffer"
+    ]
+  )
 
   @impl true
   def handle_init(options) do
@@ -29,12 +37,15 @@ defmodule Basic.Elements.Depayloader do
   @impl true
   def handle_process(_ref, buffer, _ctx, state) do
     packet = buffer.payload
-    regex = ~r/^\[frameid\:(?<frame_id>\d+(?<type>[s|e]*))\]\[timestamp\:(?<timestamp>\d+)\](?<data>.*)$/
 
-    %{"data" => data, "frame_id" => _frame_id, "type" => type, "timestamp"=>timestamp} =
+    regex =
+      ~r/^\[frameid\:(?<frame_id>\d+(?<type>[s|e]*))\]\[timestamp\:(?<timestamp>\d+)\](?<data>.*)$/
+
+    %{"data" => data, "frame_id" => _frame_id, "type" => type, "timestamp" => timestamp} =
       Regex.named_captures(regex, packet)
 
     frame = [data | state.frame]
+
     case type do
       "e" ->
         actions = prepare_frame(Enum.reverse(frame), timestamp)
