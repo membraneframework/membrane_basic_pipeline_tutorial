@@ -1,8 +1,14 @@
 defmodule Basic.Elements.Source do
+  @moduledoc """
+  A module that provides a source element allowing to read a packetized data from the input text file.
+  """
+
   use Membrane.Source
   alias Membrane.Buffer
 
-  def_options(location: [type: :string, description: "Path to the file"])
+  def_options(
+    location: [type: :string, description: "Path to the input file with packetized data"]
+  )
 
   def_output_pad(:output, caps: {Basic.Formats.Packet, type: :custom_packets}, mode: :pull)
 

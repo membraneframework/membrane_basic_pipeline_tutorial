@@ -1,10 +1,23 @@
 defmodule Basic.Elements.OrderingBuffer do
+  @moduledoc """
+  An element which gathers the packets and put the in the order, sorted by their sequence id.
+  Once the consistent batch of packets (which means - with no packets missing with packets inbetween) is completely gathered, it is send through the output pad.
+  """
+
   use Membrane.Filter
 
   def_input_pad(:input, demand_unit: :buffers, caps: {Basic.Formats.Packet, type: :custom_packets})
 
   def_output_pad(:output, caps: {Basic.Formats.Packet, type: :custom_packets})
-  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Positive integer, describing how much input buffers should be requested per each output buffer"])
+
+  def_options(
+    demand_factor: [
+      type: :integer,
+      spec: pos_integer,
+      description:
+        "Positive integer, describing how much input buffers should be requested per each output buffer"
+    ]
+  )
 
   @impl true
   def handle_demand(_ref, size, _unit, _ctx, state) do

@@ -1,4 +1,7 @@
 defmodule Basic.Elements.Depayloader do
+  @moduledoc """
+  Element responsible for assembling the frames out of ordered packets.
+  """
   use Membrane.Filter
 
   def_input_pad(:input, demand_unit: :buffers, caps: {Basic.Formats.Packet, type: :custom_packets})

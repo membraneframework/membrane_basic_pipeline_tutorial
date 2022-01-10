@@ -1,4 +1,7 @@
 defmodule Basic.Pipeline do
+  @moduledoc """
+  A module providing the pipeline, which aggregates and links the elements.
+  """
   use Membrane.Pipeline
 
   @impl true

@@ -1,4 +1,7 @@
 defmodule Basic.Elements.Mixer do
+  @moduledoc """
+  Element responsible for ordering the frames coming from two sources, basing on their timestamps.
+  """
   use Membrane.Filter
 
   def_input_pad(:first_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8})
@@ -6,7 +9,15 @@ defmodule Basic.Elements.Mixer do
   def_input_pad(:second_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8})
 
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
-  def_options(demand_factor: [type: :integer, spec: pos_integer, description: "Positive integer, describing how much input buffers should be requested per each output buffer"])
+
+  def_options(
+    demand_factor: [
+      type: :integer,
+      spec: pos_integer,
+      description:
+        "Positive integer, describing how much input buffers should be requested per each output buffer"
+    ]
+  )
 
   @impl true
   def handle_demand(_ref, 0, _unit, _ctx, state) do
@@ -15,7 +26,11 @@ defmodule Basic.Elements.Mixer do
 
   @impl true
   def handle_demand(_ref, size, _unit, _ctx, state) do
-    {{:ok, [demand: {:first_input, state.demand_factor*size}, demand: {:second_input, state.demand_factor*size}]}, state}
+    {{:ok,
+      [
+        demand: {:first_input, state.demand_factor * size},
+        demand: {:second_input, state.demand_factor * size}
+      ]}, state}
   end
 
   @impl true
