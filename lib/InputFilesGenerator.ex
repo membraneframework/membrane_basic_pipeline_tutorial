@@ -42,7 +42,6 @@ defmodule InputFilesGenerator do
       |> Enum.with_index(1)
       |> Enum.map(fn {sequence, sequence_id} -> "[seq:#{sequence_id}]#{sequence}" end)
 
-    content = Enum.sort(content, fn _x, _y -> Enum.random([false, true]) end)
-    Enum.join(content, "\n")
+    Enum.shuffle(content) |> Enum.join("\n")
   end
 end
