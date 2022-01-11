@@ -62,7 +62,7 @@ defmodule Basic.Elements.Depayloader do
   end
 
   defp prepare_frame(frame, timestamp) do
-    frame = frame |> Enum.join(" ")
+    frame = frame |> Enum.join("")
     buffer = %Membrane.Buffer{payload: frame, pts: String.to_integer(timestamp)}
     [buffer: {:output, buffer}]
   end
