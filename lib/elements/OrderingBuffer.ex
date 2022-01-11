@@ -10,28 +10,18 @@ defmodule Basic.Elements.OrderingBuffer do
 
   def_output_pad(:output, caps: {Basic.Formats.Packet, type: :custom_packets})
 
-  def_options(
-    demand_factor: [
-      type: :integer,
-      spec: pos_integer,
-      description:
-        "Positive integer, describing how much input buffers should be requested per each output buffer"
-    ]
-  )
-
   @impl true
-  def handle_demand(_ref, size, _unit, _ctx, state) do
-    {{:ok, demand: {Pad.ref(:input), state.demand_factor * size}}, state}
-  end
-
-  @impl true
-  def handle_init(options) do
+  def handle_init(_options) do
     {:ok,
      %{
        ordered_packets: [],
-       last_processed_seq_id: 0,
-       demand_factor: options.demand_factor
+       last_processed_seq_id: 0
      }}
+  end
+
+  @impl true
+  def handle_demand(_ref, size, _unit, _ctx, state) do
+    {{:ok, demand: {Pad.ref(:input), size}}, state}
   end
 
   @impl true
