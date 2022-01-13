@@ -7,7 +7,7 @@ defmodule Basic.Pipeline do
   @impl true
   def handle_init(_opts) do
     children = %{
-      input1: %Basic.Elements.Source{location: "input1.txt."},
+      input1: %Basic.Elements.Source{location: "input1.txt"},
       ordering_buffer1: Basic.Elements.OrderingBuffer,
       depayloader1: %Basic.Elements.Depayloader{demand_factor: 5},
       input2: %Basic.Elements.Source{location: "input2.txt"},
