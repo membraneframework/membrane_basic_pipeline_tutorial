@@ -19,7 +19,6 @@ defmodule Basic.Elements.Depayloader do
 
   @impl true
   def handle_init(options) do
-    IO.puts("OPTS: #{options.expected_number_of_packets_per_frame}")
     {:ok,
      %{
        frame: [],

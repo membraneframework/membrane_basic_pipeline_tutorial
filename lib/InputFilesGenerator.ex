@@ -29,8 +29,8 @@ defmodule InputFilesGenerator do
     first_speaker_content = prepare_sequence(first_speaker_content)
     second_speaker_content = prepare_sequence(second_speaker_content)
     {format, output_path} = extract_format(input_location)
-    File.write!(output_path <> "1."<>format, first_speaker_content)
-    File.write!(output_path <> "2."<>format, second_speaker_content)
+    File.write!(output_path <> "1." <> format, first_speaker_content)
+    File.write!(output_path <> "2." <> format, second_speaker_content)
   end
 
   defp prepare_sequence(content) do
@@ -61,7 +61,7 @@ defmodule InputFilesGenerator do
   end
 
   defp extract_format(string) do
-    [format| rest] = Enum.reverse(String.split(string, "."))
+    [format | rest] = Enum.reverse(String.split(string, "."))
     {format, Enum.join(rest, ".")}
   end
 end
