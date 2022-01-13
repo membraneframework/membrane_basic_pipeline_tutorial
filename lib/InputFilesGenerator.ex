@@ -8,7 +8,7 @@ defmodule InputFilesGenerator do
   where:
   + sequence_id - the ordering number of the packet (relative to each of the peers). Basing on this number we will be able to assemble the particular frame.
   + frame_id - the identifier which consists of the number of the frame to which the body of a given packet belongs, optionally followed by a single character **'s'** (meaning that this packet is a **s**tarting packet of a frame) or by **'e'** character (meaning that the packet is the **e**nding packet of the frame). Note that frames are numbered relatively to each peer in that conversation and that frame_id does not describe the global order of the frames in the final file.
-  + timestamp - a number indicating where the given frame should be put in the final file. Timestamp describes the order of the frames from both the peers.
+  + timestamp - a number indicating where the given frame should be put in the final file.
   + text - the proper body of the packet, in our case - a single word.
 
   The first file contains odd lines from the input file and the second file contians the even ones.

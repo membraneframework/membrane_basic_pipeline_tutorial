@@ -9,10 +9,10 @@ defmodule Basic.Pipeline do
     children = %{
       input1: %Basic.Elements.Source{location: "input1.txt"},
       ordering_buffer1: Basic.Elements.OrderingBuffer,
-      depayloader1: %Basic.Elements.Depayloader{demand_factor: 5},
+      depayloader1: %Basic.Elements.Depayloader{expected_number_of_packets_per_frame: 5},
       input2: %Basic.Elements.Source{location: "input2.txt"},
       ordering_buffer2: Basic.Elements.OrderingBuffer,
-      depayloader2: %Basic.Elements.Depayloader{demand_factor: 5},
+      depayloader2: %Basic.Elements.Depayloader{expected_number_of_packets_per_frame: 5},
       mixer: Basic.Elements.Mixer,
       output: %Basic.Elements.Sink{location: "output.txt"}
     }

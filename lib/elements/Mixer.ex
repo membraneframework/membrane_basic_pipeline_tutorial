@@ -1,6 +1,6 @@
 defmodule Basic.Elements.Mixer do
   @moduledoc """
-  Element responsible for ordering the frames coming from two sources, basing on their timestamps.
+  Element responsible for mixing the frames coming from two sources, basing on their timestamps.
   """
   use Membrane.Filter
 

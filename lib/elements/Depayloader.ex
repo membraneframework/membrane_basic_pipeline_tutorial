@@ -9,20 +9,21 @@ defmodule Basic.Elements.Depayloader do
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
 
   def_options(
-    demand_factor: [
+    expected_number_of_packets_per_frame: [
       type: :integer,
       spec: pos_integer,
       description:
-        "Positive integer, describing how much input buffers should be requested per each output buffer"
+        "Positive integer, describing how many packets form a single frame. Used to demand for the proper number of packets while assembling the frame."
     ]
   )
 
   @impl true
   def handle_init(options) do
+    IO.puts("OPTS: #{options.expected_number_of_packets_per_frame}")
     {:ok,
      %{
        frame: [],
-       demand_factor: options.demand_factor
+       expected_number_of_packets_per_frame: options.expected_number_of_packets_per_frame
      }}
   end
 
@@ -34,7 +35,7 @@ defmodule Basic.Elements.Depayloader do
 
   @impl true
   def handle_demand(_ref, size, _unit, _ctx, state) do
-    {{:ok, demand: {Pad.ref(:input), size * state.demand_factor}}, state}
+    {{:ok, demand: {Pad.ref(:input), size * state.expected_number_of_packets_per_frame}}, state}
   end
 
   @impl true

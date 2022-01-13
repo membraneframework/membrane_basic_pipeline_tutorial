@@ -1,6 +1,6 @@
 defmodule Basic.Elements.OrderingBuffer do
   @moduledoc """
-  An element which gathers the packets and put the in the order, sorted by their sequence id.
+  An element that gathers the packets and puts them in the order, sorted by their sequence id.
   Once the consistent batch of packets (which means - with no packets missing with packets inbetween) is completely gathered, it is send through the output pad.
   """
 
