@@ -13,7 +13,7 @@ defmodule InputFilesGenerator do
 
   The first file contains odd lines from the input file and the second file contians the even ones.
   """
-  def generate(input_location, output_name, how_many_packets_per_frame) do
+  def generate(input_location, how_many_packets_per_frame) do
     raw_file_binary = File.read!(input_location)
     content = String.split(raw_file_binary, "\n")
 
@@ -28,8 +28,9 @@ defmodule InputFilesGenerator do
     second_speaker_content = Enum.filter(content, fn {_words_list, no} -> rem(no, 2) == 0 end)
     first_speaker_content = prepare_sequence(first_speaker_content)
     second_speaker_content = prepare_sequence(second_speaker_content)
-    File.write!(output_name <> "1.txt", first_speaker_content)
-    File.write!(output_name <> "2.txt", second_speaker_content)
+    {format, output_path} = extract_format(input_location)
+    File.write!(output_path <> "1."<>format, first_speaker_content)
+    File.write!(output_path <> "2."<>format, second_speaker_content)
   end
 
   defp prepare_sequence(content) do
@@ -57,5 +58,10 @@ defmodule InputFilesGenerator do
     if String.length(rest) > 0,
       do: [head | get_substrings_list(rest, desired_length)],
       else: [head]
+  end
+
+  defp extract_format(string) do
+    [format| rest] = Enum.reverse(String.split(string, "."))
+    {format, Enum.join(rest, ".")}
   end
 end
