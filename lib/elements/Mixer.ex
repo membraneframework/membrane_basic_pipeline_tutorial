@@ -11,14 +11,14 @@ defmodule Basic.Elements.Mixer do
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
 
   defmodule Track do
-    defstruct [:track_id, status: :ready, samples: []]
+    defstruct status: :ready, samples: []
   end
 
   @impl true
   def handle_init(_options) do
     {:ok,
      %{
-       tracks: [%Track{track_id: :first_input}, %Track{track_id: :second_input}]
+       tracks: %{first_input: %Track{}, second_input: %Track{}}
      }}
   end
 
@@ -38,15 +38,14 @@ defmodule Basic.Elements.Mixer do
 
   @impl true
   def handle_end_of_stream(pad, _context, state) do
-    {track, rest} = pop_track(state.tracks, pad)
-
     tracks =
-      if track.samples != [] do
-        track = %Track{track | status: :end_of_stream}
-        [track | rest]
-      else
-        rest
-      end
+      Map.update!(state.tracks, pad, fn track ->
+        if track.samples == [] do
+          %Track{track | status: :end_of_stream}
+        else
+          %Track{track | status: :no_more_buffers}
+        end
+      end)
 
     state = %{state | tracks: tracks}
     {state, actions} = update_state_and_prepare_actions(state)
@@ -55,17 +54,19 @@ defmodule Basic.Elements.Mixer do
 
   @impl true
   def handle_process(pad, buffer, _context, state) do
-    {track, rest_of_tracks} = pop_track(state.tracks, pad)
-    track = %Track{track | samples: [buffer | track.samples]}
-    tracks = [track | rest_of_tracks]
+    tracks =
+      Map.update!(state.tracks, pad, fn track ->
+        %Track{track | samples: [buffer | track.samples]}
+      end)
+
     state = %{state | tracks: tracks}
     {state, actions} = update_state_and_prepare_actions(state)
     # Demand on tracks where the samples list is empty
     actions =
       actions ++
         (tracks
-         |> Enum.filter(fn track -> track.status == :ready and track.samples == [] end)
-         |> Enum.map(fn track -> {:demand, {Pad.ref(track.track_id), 1}} end))
+         |> Enum.filter(fn {_, track} -> track.status == :ready and track.samples == [] end)
+         |> Enum.map(fn {track_id, _} -> {:demand, {Pad.ref(track_id), 1}} end))
 
     {{:ok, actions}, state}
   end
@@ -76,7 +77,7 @@ defmodule Basic.Elements.Mixer do
     actions = Enum.map(buffers, fn buffer -> {:buffer, {:output, buffer}} end)
     # Send end_of_stream if all buffers are processed
     actions =
-      if tracks == [] do
+      if Enum.all?(state.tracks, fn {_, track} -> track.status == :end_of_stream end) do
         actions ++ [end_of_stream: :output]
       else
         actions
@@ -86,32 +87,33 @@ defmodule Basic.Elements.Mixer do
   end
 
   defp prepare_buffers(tracks) do
-    if tracks != [] and Enum.all?(tracks, fn track -> track.samples != [] end) do
+    # tracks = Enum.filter(tracks, fn {_, track} -> track.status != :end_of_stream end) |> Map.new()
+    tracks_with_buffers =
+      tracks |> Enum.filter(fn {_, track} -> track.status != :end_of_stream end) |> Map.new()
+
+    if tracks_with_buffers != %{} and
+         Enum.all?(tracks_with_buffers, fn {_, track} -> track.samples != [] end) do
       {track_id, _pts} =
-        tracks
-        |> Enum.map(&{&1.track_id, List.last(&1.samples).pts})
+        tracks_with_buffers
+        |> Enum.map(fn {track_id, track} -> {track_id, List.last(track.samples).pts} end)
         |> Enum.min_by(fn {_track_id, pts} -> pts end)
 
-      {track, tracks} = pop_track(tracks, track_id)
+      track = Map.get(tracks, track_id)
       {buffer_to_output, rest} = List.pop_at(track.samples, length(track.samples) - 1)
-      track = %{track | samples: rest}
 
       tracks =
-        if track.samples != [] or track.status != :end_of_stream do
-          [track | tracks]
-        else
-          tracks
-        end
+        Map.update!(tracks, track_id, fn track ->
+          if track.status == :no_more_buffers and rest == [] do
+            %Track{samples: [], status: :end_of_stream}
+          else
+            %Track{track | samples: rest}
+          end
+        end)
 
       {buffers, tracks} = prepare_buffers(tracks)
       {[buffer_to_output | buffers], tracks}
     else
       {[], tracks}
     end
-  end
-
-  defp pop_track(tracks, track_id) do
-    index = tracks |> Enum.find_index(fn %Track{track_id: id} -> id == track_id end)
-    List.pop_at(tracks, index)
   end
 end
