@@ -11,7 +11,13 @@ defmodule Basic.Elements.Mixer do
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
 
   defmodule Track do
-    defstruct status: :ready, samples: []
+    @type status_t :: :playing | :no_more_buffers | :end_of_stream
+    @type t :: %__MODULE__{
+            status: status_t(),
+            samples: [Membrane.Buffer.t()]
+          }
+
+    defstruct status: :playing, samples: []
   end
 
   @impl true
@@ -65,7 +71,7 @@ defmodule Basic.Elements.Mixer do
     actions =
       actions ++
         (tracks
-         |> Enum.filter(fn {_, track} -> track.status == :ready and track.samples == [] end)
+         |> Enum.filter(fn {_, track} -> track.status == :playing and track.samples == [] end)
          |> Enum.map(fn {track_id, _} -> {:demand, {Pad.ref(track_id), 1}} end))
 
     {{:ok, actions}, state}
@@ -87,7 +93,6 @@ defmodule Basic.Elements.Mixer do
   end
 
   defp prepare_buffers(tracks) do
-    # tracks = Enum.filter(tracks, fn {_, track} -> track.status != :end_of_stream end) |> Map.new()
     tracks_with_buffers =
       tracks |> Enum.filter(fn {_, track} -> track.status != :end_of_stream end) |> Map.new()
 
