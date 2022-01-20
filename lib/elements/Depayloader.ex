@@ -9,7 +9,7 @@ defmodule Basic.Elements.Depayloader do
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
 
   def_options(
-    expected_number_of_packets_per_frame: [
+    packets_per_frame: [
       type: :integer,
       spec: pos_integer,
       description:
@@ -22,7 +22,7 @@ defmodule Basic.Elements.Depayloader do
     {:ok,
      %{
        frame: [],
-       expected_number_of_packets_per_frame: options.expected_number_of_packets_per_frame
+       packets_per_frame: options.packets_per_frame
      }}
   end
 
@@ -34,7 +34,7 @@ defmodule Basic.Elements.Depayloader do
 
   @impl true
   def handle_demand(_ref, size, _unit, _ctx, state) do
-    {{:ok, demand: {Pad.ref(:input), size * state.expected_number_of_packets_per_frame}}, state}
+    {{:ok, demand: {Pad.ref(:input), size}}, state}
   end
 
   @impl true
@@ -57,7 +57,7 @@ defmodule Basic.Elements.Depayloader do
 
       _ ->
         state = Map.put(state, :frame, frame)
-        {{:ok, redemand: :output}, state}
+        {:ok, state}
     end
   end
 

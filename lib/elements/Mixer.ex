@@ -64,7 +64,6 @@ defmodule Basic.Elements.Mixer do
       Map.update!(state.tracks, pad, fn track ->
         %Track{track | samples: [buffer | track.samples]}
       end)
-
     state = %{state | tracks: tracks}
     {state, actions} = update_state_and_prepare_actions(state)
     # Demand on tracks where the samples list is empty
@@ -88,20 +87,18 @@ defmodule Basic.Elements.Mixer do
       else
         actions
       end
-
     {state, actions}
   end
 
   defp prepare_buffers(tracks) do
-    tracks_with_buffers =
-      tracks |> Enum.filter(fn {_, track} -> track.status != :end_of_stream end) |> Map.new()
+    active_tracks =
+      tracks |> Enum.reject(fn {_track_id, track}-> track.status==:end_of_stream end) |> Map.new()
 
-    if tracks_with_buffers != %{} and
-         Enum.all?(tracks_with_buffers, fn {_, track} -> track.samples != [] end) do
-      {track_id, _pts} =
-        tracks_with_buffers
-        |> Enum.map(fn {track_id, track} -> {track_id, List.last(track.samples).pts} end)
-        |> Enum.min_by(fn {_track_id, pts} -> pts end)
+    if active_tracks != %{} and
+         Enum.all?(active_tracks, fn {_, track} -> track.samples != [] end) do
+      {track_id, _track} =
+        active_tracks
+        |> Enum.min_by(fn {_track_id, track} -> List.last(track.samples).pts end)
 
       track = Map.get(tracks, track_id)
       {buffer_to_output, rest} = List.pop_at(track.samples, length(track.samples) - 1)
