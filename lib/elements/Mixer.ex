@@ -44,15 +44,8 @@ defmodule Basic.Elements.Mixer do
 
   @impl true
   def handle_end_of_stream(pad, _context, state) do
-    tracks =
-      Map.update!(state.tracks, pad, fn track ->
-        if track.samples == [] do
-          %Track{track | status: :end_of_stream}
-        else
-          %Track{track | status: :no_more_buffers}
-        end
-      end)
-
+    tracks = Map.put(state.tracks, pad, %Track{Map.get(state.tracks, pad)| status: :no_more_buffer})
+    tracks = update_tracks_status(tracks, pad)
     state = %{state | tracks: tracks}
     {state, actions} = update_state_and_prepare_actions(state)
     {{:ok, actions}, state}
@@ -91,31 +84,33 @@ defmodule Basic.Elements.Mixer do
   end
 
   defp prepare_buffers(tracks) do
+    IO.puts("TRACKS: #{inspect(tracks)}")
     active_tracks =
       tracks |> Enum.reject(fn {_track_id, track}-> track.status==:end_of_stream end) |> Map.new()
-
     if active_tracks != %{} and
          Enum.all?(active_tracks, fn {_, track} -> track.samples != [] end) do
       {track_id, _track} =
         active_tracks
         |> Enum.min_by(fn {_track_id, track} -> List.last(track.samples).pts end)
-
       track = Map.get(tracks, track_id)
       {buffer_to_output, rest} = List.pop_at(track.samples, length(track.samples) - 1)
-
-      tracks =
-        Map.update!(tracks, track_id, fn track ->
-          if track.status == :no_more_buffers and rest == [] do
-            %Track{samples: [], status: :end_of_stream}
-          else
-            %Track{track | samples: rest}
-          end
-        end)
-
+      tracks = Map.put(tracks, track_id, %Track{track| samples: rest})
+      tracks = update_tracks_status(tracks, track_id)
       {buffers, tracks} = prepare_buffers(tracks)
       {[buffer_to_output | buffers], tracks}
     else
       {[], tracks}
     end
   end
+
+  defp update_tracks_status(tracks, track_id) do
+    Map.update!(tracks, track_id, fn track ->
+      if track.status == :no_more_buffers and track.samples == [] do
+        %Track{status: :end_of_stream}
+      else
+        track
+      end
+    end)
+  end
+
 end
