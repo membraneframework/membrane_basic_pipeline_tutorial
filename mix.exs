@@ -23,7 +23,8 @@ defmodule Basic.MixProject do
     [
       {:membrane_core, "~> 0.8.0"},
       {:membrane_caps_video_raw, "~> 0.1.0"},
-      {:membrane_caps_audio_raw, "~> 0.5.0"}
+      {:membrane_caps_audio_raw, "~> 0.5.0"},
+      {:mock, "~> 0.3.0", only: :test}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
