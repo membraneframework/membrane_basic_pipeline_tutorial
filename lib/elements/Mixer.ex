@@ -11,13 +11,14 @@ defmodule Basic.Elements.Mixer do
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
 
   defmodule Track do
-    @type status_t :: :playing | :no_more_buffers | :end_of_stream
+    @type status_t :: :started | :finished
     @type t :: %__MODULE__{
-            status: status_t(),
-            samples: [Membrane.Buffer.t()]
+            buffer: Membrane.Buffer.t(),
+            demanded: boolean(),
+            status: status_t()
           }
 
-    defstruct status: :playing, samples: []
+    defstruct buffer: nil, demanded: false, status: :started
   end
 
   @impl true
@@ -29,44 +30,35 @@ defmodule Basic.Elements.Mixer do
   end
 
   @impl true
-  def handle_demand(_ref, 0, _unit, _ctx, state) do
-    {:ok, state}
-  end
-
-  @impl true
   def handle_demand(_ref, size, _unit, _ctx, state) do
-    {{:ok,
-      [
-        demand: {:first_input, size},
-        demand: {:second_input, size}
-      ]}, state}
+    {state, actions} =
+      if size > 0 do
+        update_state_and_prepare_actions(state)
+      else
+        {state, []}
+      end
+    {{:ok, actions}, state}
   end
 
   @impl true
   def handle_end_of_stream(pad, _context, state) do
-    tracks = Map.put(state.tracks, pad, %Track{Map.get(state.tracks, pad)| status: :no_more_buffer})
-    tracks = update_tracks_status(tracks, pad)
+    tracks =
+      Map.update!(state.tracks, pad, fn track ->
+        %Track{track | status: :finished}
+      end)
+
     state = %{state | tracks: tracks}
-    {state, actions} = update_state_and_prepare_actions(state)
-    {{:ok, actions}, state}
+    {{:ok, [{:redemand, :output}]}, state}
   end
 
   @impl true
   def handle_process(pad, buffer, _context, state) do
     tracks =
       Map.update!(state.tracks, pad, fn track ->
-        %Track{track | samples: [buffer | track.samples]}
+        %Track{track | buffer: buffer, demanded: false}
       end)
     state = %{state | tracks: tracks}
-    {state, actions} = update_state_and_prepare_actions(state)
-    # Demand on tracks where the samples list is empty
-    actions =
-      actions ++
-        (tracks
-         |> Enum.filter(fn {_, track} -> track.status == :playing and track.samples == [] end)
-         |> Enum.map(fn {track_id, _} -> {:demand, {Pad.ref(track_id), 1}} end))
-
-    {{:ok, actions}, state}
+    {{:ok, [{:redemand, :output}]}, state}
   end
 
   defp update_state_and_prepare_actions(state) do
@@ -75,42 +67,59 @@ defmodule Basic.Elements.Mixer do
     actions = Enum.map(buffers, fn buffer -> {:buffer, {:output, buffer}} end)
     # Send end_of_stream if all buffers are processed
     actions =
-      if Enum.all?(state.tracks, fn {_, track} -> track.status == :end_of_stream end) do
+      if Enum.all?(state.tracks, fn {_, track} -> track.status == :finished end) do
         actions ++ [end_of_stream: :output]
       else
         actions
       end
+
+    {state, demand_actions} = demand_on_empty_tracks(state)
+    actions = actions ++ demand_actions
     {state, actions}
   end
 
   defp prepare_buffers(tracks) do
-    IO.puts("TRACKS: #{inspect(tracks)}")
     active_tracks =
-      tracks |> Enum.reject(fn {_track_id, track}-> track.status==:end_of_stream end) |> Map.new()
+      tracks
+      |> Enum.reject(fn {_track_id, track} ->
+        track.status == :finished and track.buffer == nil
+      end)
+      |> Map.new()
+
     if active_tracks != %{} and
-         Enum.all?(active_tracks, fn {_, track} -> track.samples != [] end) do
-      {track_id, _track} =
+         Enum.all?(active_tracks, fn {_, track} -> track.buffer != nil end) do
+      {track_id, track} =
         active_tracks
-        |> Enum.min_by(fn {_track_id, track} -> List.last(track.samples).pts end)
-      track = Map.get(tracks, track_id)
-      {buffer_to_output, rest} = List.pop_at(track.samples, length(track.samples) - 1)
-      tracks = Map.put(tracks, track_id, %Track{track| samples: rest})
-      tracks = update_tracks_status(tracks, track_id)
+        |> Enum.min_by(fn {_track_id, track} -> track.buffer.pts end)
+
+      tracks = Map.put(tracks, track_id, %Track{track | buffer: nil, demanded: false})
       {buffers, tracks} = prepare_buffers(tracks)
-      {[buffer_to_output | buffers], tracks}
+      {[track.buffer | buffers], tracks}
     else
       {[], tracks}
     end
   end
 
-  defp update_tracks_status(tracks, track_id) do
-    Map.update!(tracks, track_id, fn track ->
-      if track.status == :no_more_buffers and track.samples == [] do
-        %Track{status: :end_of_stream}
-      else
-        track
-      end
-    end)
-  end
+  defp demand_on_empty_tracks(state) do
+    actions =
+      state.tracks
+      |> Enum.filter(fn {_, track} ->
+        track.status == :started and track.buffer == nil and track.demanded == false
+      end)
+      |> Enum.map(fn {track_id, _} -> {:demand, {Pad.ref(track_id), 1}} end)
 
+    tracks =
+      state.tracks
+      |> Enum.map(fn {track_id, track} ->
+        if track.status == :started and track.buffer == nil and track.demanded == false do
+          {track_id, %Track{track | demanded: true}}
+        else
+          {track_id, track}
+        end
+      end)
+      |> Map.new()
+
+    state = %{state | tracks: tracks}
+    {state, actions}
+  end
 end

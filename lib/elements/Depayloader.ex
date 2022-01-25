@@ -34,7 +34,7 @@ defmodule Basic.Elements.Depayloader do
 
   @impl true
   def handle_demand(_ref, size, _unit, _ctx, state) do
-    {{:ok, demand: {Pad.ref(:input), size}}, state}
+    {{:ok, demand: {Pad.ref(:input), size*state.packets_per_frame}}, state}
   end
 
   @impl true
