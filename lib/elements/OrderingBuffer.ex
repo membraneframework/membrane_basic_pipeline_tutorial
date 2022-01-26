@@ -35,7 +35,6 @@ defmodule Basic.Elements.OrderingBuffer do
     ordered_packets = [packet | state.ordered_packets] |> Enum.sort()
     state = Map.put(state, :ordered_packets, ordered_packets)
     {last_seq_id, _} = Enum.at(ordered_packets, 0)
-
     if state.last_processed_seq_id + 1 == last_seq_id do
       reversed_ready_packets_sequence = get_ready_packets_sequence(ordered_packets, [])
       {last_processed_seq_id, _} = Enum.at(reversed_ready_packets_sequence, 0)
@@ -53,7 +52,6 @@ defmodule Basic.Elements.OrderingBuffer do
 
       buffers =
         ready_packets_sequence |> Enum.map(fn packet -> %Membrane.Buffer{payload: packet} end)
-
       {{:ok, buffer: {:output, buffers}}, state}
     else
       {{:ok, redemand: :output}, state}
