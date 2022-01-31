@@ -24,3 +24,6 @@ basic-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+#Text files, used as an exemplary input
+*.txt
