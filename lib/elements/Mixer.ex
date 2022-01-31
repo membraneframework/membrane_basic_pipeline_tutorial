@@ -48,7 +48,7 @@ defmodule Basic.Elements.Mixer do
   end
 
   @impl true
-  def handle_process(pad, buffer, context, state) do
+  def handle_process(pad, buffer, _context, state) do
     tracks =
       Map.update!(state.tracks, pad, fn track ->
         %Track{track | buffer: buffer}
@@ -100,7 +100,6 @@ defmodule Basic.Elements.Mixer do
   defp send_end_of_stream(state) do
     end_of_stream_actions =
       if Enum.all?(state.tracks, fn {_, track} -> track.status == :finished end) do
-        IO.inspect("Stream ended", label: "$$$")
         [end_of_stream: :output]
       else
         []
