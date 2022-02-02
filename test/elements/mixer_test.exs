@@ -51,7 +51,6 @@ defmodule MixerTest do
     {:ok, pipeline} = Pipeline.start_link(options)
 
     assert_start_of_stream(pipeline, :sink)
-    assert_
     assert_sink_buffer(pipeline,:sink, %Buffer{pts: 1})
     assert_sink_buffer(pipeline,:sink, %Buffer{pts: 2})
     assert_sink_buffer(pipeline,:sink, %Buffer{pts: 3})
