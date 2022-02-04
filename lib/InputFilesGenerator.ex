@@ -16,40 +16,32 @@ defmodule InputFilesGenerator do
   def generate(input_location, how_many_packets_per_frame) do
     raw_file_binary = File.read!(input_location)
     content = String.split(raw_file_binary, "\n")
-
-    content =
+    content = fetch_information_about_peer(content)
+    content = content |> Enum.with_index(1) |>
       Enum.map(
-        content,
-        &get_substrings_list(&1, ceil(String.length(&1) / how_many_packets_per_frame))
+        fn {{speaker_name, line}, timestamp} ->
+          {speaker_name, get_substrings_list(line, ceil(String.length(line) / how_many_packets_per_frame)), timestamp}
+        end
       )
 
-    content = Enum.zip(content, Range.new(1, length(content)))
-    first_speaker_content = Enum.filter(content, fn {_words_list, no} -> rem(no, 2) != 0 end)
-    second_speaker_content = Enum.filter(content, fn {_words_list, no} -> rem(no, 2) == 0 end)
-    first_speaker_content = prepare_sequence(first_speaker_content)
-    second_speaker_content = prepare_sequence(second_speaker_content)
+    unique_speakers = Enum.uniq(content |> Enum.map(fn {speaker, _content, _timestamp} -> speaker end))
     {format, output_path} = extract_format(input_location)
-    File.write!(output_path <> "1." <> format, first_speaker_content)
-    File.write!(output_path <> "2." <> format, second_speaker_content)
+    for speaker <- unique_speakers do
+      to_write = content |> Enum.filter(fn {speaker_name, _speaker_content, _timestamp}-> speaker_name==speaker end)
+      |> Enum.with_index(1)
+      |> Enum.map(fn {{_speaker_name, speaker_content, timestamp}, frame_id} ->
+          prepare_sequence(speaker_content, frame_id, timestamp)
+       end) |> Enum.flat_map(& &1) |> Enum.with_index(1)|> Enum.map(fn {packet, seq_id} -> "[seq:#{seq_id}]#{packet}" end) |> Enum.shuffle() |> Enum.join("\n")
+       File.write!(output_path <>"."<> speaker <> "." <> format, to_write)
+    end
+
   end
 
-  defp prepare_sequence(content) do
-    content =
-      for {{words_list, timestamp}, frame_id} <- Enum.with_index(content, 1) do
-        for {word, no} <- Enum.with_index(words_list, 1) do
-          type = if no == length(words_list), do: "e", else: ""
-          "[frameid:#{frame_id}#{type}][timestamp:#{timestamp}]#{word}"
-        end
-      end
-
-    content = Enum.flat_map(content, & &1)
-
-    content =
-      content
-      |> Enum.with_index(1)
-      |> Enum.map(fn {sequence, sequence_id} -> "[seq:#{sequence_id}]#{sequence}" end)
-
-    Enum.shuffle(content) |> Enum.join("\n")
+  defp prepare_sequence(content, frame_id, timestamp) do
+    for {part, no} <- Enum.with_index(content, 1) do
+        type = if no == length(content), do: "e", else: ""
+        "[frameid:#{frame_id}#{type}][timestamp:#{timestamp}]#{part}"
+    end
   end
 
   defp get_substrings_list(string, desired_length) when desired_length > 0 do
@@ -63,5 +55,13 @@ defmodule InputFilesGenerator do
   defp extract_format(string) do
     [format | rest] = Enum.reverse(String.split(string, "."))
     {format, Enum.join(rest, ".")}
+  end
+
+  defp fetch_information_about_peer(content) do
+    content |> Enum.map(fn line ->
+      [speaker_name| rest] = String.split(line, ": ")
+      line = Enum.join(rest)
+      {speaker_name, line}
+    end)
   end
 end

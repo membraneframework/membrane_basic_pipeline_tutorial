@@ -8,12 +8,12 @@ defmodule Mix.Tasks.GenerateInput do
     {options, arguments, errors} = OptionParser.parse(args, strict: [packetsPerFrame: :integer])
 
     packets_per_frame = Keyword.get(options, :packetsPerFrame, @default_packets_per_frame)
-    IO.puts(packets_per_frame)
     if length(errors) != 0 or length(arguments) != 1 do
       inform_about_an_error()
     else
       [input_file_path] = arguments
       InputFilesGenerator.generate(input_file_path, packets_per_frame)
+      IO.puts("Files generated successfully")
     end
 
   end
