@@ -41,14 +41,14 @@ defmodule Basic.Elements.Source do
   end
 
   @impl true
-  def handle_demand(:output, size, :buffers, _ctx, state) do
+  def handle_demand(:output, _size, :buffers, _ctx, state) do
     if state.content == [] do
       {{:ok, end_of_stream: :output}, state}
     else
-      [chosen | rest] = state.content
+      [first_packet | rest] = state.content
       state = %{state | content: rest}
-      action = [buffer: {:output, %Buffer{payload: chosen}}]
-      action = if size > 1, do: action ++ [redemand: :output], else: action
+      action = [buffer: {:output, %Buffer{payload: first_packet}}]
+      action = action ++ [redemand: :output]
       {{:ok, action}, state}
     end
   end

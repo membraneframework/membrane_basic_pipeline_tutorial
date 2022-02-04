@@ -34,7 +34,8 @@ defmodule SourceTest do
         })
 
       assert length(state.content) == length(@exemplary_content) - 1
-      assert actions == [buffer: {:output, %Buffer{payload: Enum.at(@exemplary_content, 0)}}]
+      assert Keyword.has_key?(actions, :buffer)
+      assert Keyword.get(actions, :buffer) ==  {:output, %Buffer{payload: Enum.at(@exemplary_content, 0)}}
     end
 
     test "redemands if more then one buffer is demanded" do
