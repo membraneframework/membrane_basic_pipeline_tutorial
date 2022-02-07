@@ -1,0 +1,8 @@
+[seq:1][frameid:1][timestamp:3]Here y
+[seq:5][frameid:2][timestamp:5]How a
+[seq:6][frameid:2][timestamp:5]re yo
+[seq:4][frameid:1e][timestamp:3]d A! 
+[seq:8][frameid:2e][timestamp:5]ng?
+[seq:2][frameid:1][timestamp:3]ou are
+[seq:3][frameid:1][timestamp:3], B an
+[seq:7][frameid:2][timestamp:5]u doi

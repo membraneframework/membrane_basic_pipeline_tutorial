@@ -4,9 +4,7 @@ defmodule Basic.Elements.Mixer do
   """
   use Membrane.Filter
 
-  def_input_pad(:first_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8})
-
-  def_input_pad(:second_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8})
+  def_input_pad(:input, demand_unit: :buffers, availability: :on_request, caps: {Basic.Formats.Frame, encoding: :utf8})
 
   def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
 
@@ -23,7 +21,7 @@ defmodule Basic.Elements.Mixer do
   def handle_init(_options) do
     {:ok,
      %{
-       tracks: %{first_input: %Track{}, second_input: %Track{}}
+       tracks: %{}
      }}
   end
 
@@ -35,6 +33,12 @@ defmodule Basic.Elements.Mixer do
 
   @impl true
   def handle_demand(_ref, _size, _unit, _ctx, state), do: {state, []}
+
+  @impl true
+  def handle_pad_added(pad, _context, state) do
+    state = %{state| tracks: Map.put(state.tracks, pad, %Track{})}
+    {:ok, state}
+  end
 
   @impl true
   def handle_end_of_stream(pad, _context, state) do
