@@ -4,7 +4,6 @@ defmodule Basic.Elements.Sink do
   """
 
   use Membrane.Sink
-  @how_much_to_demand 10
 
   def_options(location: [type: :string, description: "Path to the file"])
 
@@ -25,7 +24,7 @@ defmodule Basic.Elements.Sink do
 
   @impl true
   def handle_prepared_to_playing(_ctx, state) do
-    {{:ok, demand: {:input, @how_much_to_demand}}, state}
+    {{:ok, demand: {:input, 10}}, state}
   end
 
   @impl true
@@ -36,6 +35,6 @@ defmodule Basic.Elements.Sink do
   @impl true
   def handle_write(:input, buffer, _ctx, state) do
     File.write!(state.location, buffer.payload <> "\n", [:append])
-    {{:ok, demand: {:input, @how_much_to_demand}}, state}
+    {{:ok, demand: {:input, 10}}, state}
   end
 end
