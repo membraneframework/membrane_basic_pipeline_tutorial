@@ -38,7 +38,7 @@ defmodule Basic.Elements.OrderingBuffer do
 
     if state.last_processed_seq_id + 1 == last_seq_id do
       reversed_ready_packets_sequence = get_ready_packets_sequence(ordered_packets, [])
-      {last_processed_seq_id, _} = Enum.at(reversed_ready_packets_sequence, 0)
+      [{last_processed_seq_id, _} | _] = reversed_ready_packets_sequence
 
       ordered_packets =
         Enum.slice(
@@ -48,11 +48,7 @@ defmodule Basic.Elements.OrderingBuffer do
 
       state = Map.put(state, :ordered_packets, ordered_packets)
       state = Map.put(state, :last_processed_seq_id, last_processed_seq_id)
-      ready_packets_sequence = Enum.reverse(reversed_ready_packets_sequence)
-      ready_packets_sequence = Enum.map(ready_packets_sequence, fn {_seq_id, data} -> data end)
-
-      buffers =
-        ready_packets_sequence |> Enum.map(fn packet -> %Membrane.Buffer{payload: packet} end)
+      buffers = Enum.reverse(reversed_ready_packets_sequence) |> Enum.map(fn {_seq_id, data} -> data end)
 
       {{:ok, buffer: {:output, buffers}}, state}
     else
@@ -79,6 +75,6 @@ defmodule Basic.Elements.OrderingBuffer do
   defp unzip_packet(packet) do
     regex = ~r/^\[seq\:(?<seq_id>\d+)\](?<data>.*)$/
     %{"data" => data, "seq_id" => seq_id} = Regex.named_captures(regex, packet)
-    {String.to_integer(seq_id), data}
+    {String.to_integer(seq_id), %Membrane.Buffer{payload: data}}
   end
 end
