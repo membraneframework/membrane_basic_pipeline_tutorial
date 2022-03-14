@@ -3,10 +3,11 @@ defmodule Basic.Elements.Depayloader do
   Element responsible for assembling the frames out of ordered packets.
   """
   use Membrane.Filter
+  alias Basic.Formats.{Frame, Packet}
 
-  def_input_pad(:input, demand_unit: :buffers, caps: {Basic.Formats.Packet, type: :custom_packets})
+  def_input_pad(:input, demand_unit: :buffers, caps: {Packet, type: :custom_packets})
 
-  def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
+  def_output_pad(:output, caps: {Frame, encoding: :utf8})
 
   def_options(
     packets_per_frame: [
@@ -28,7 +29,7 @@ defmodule Basic.Elements.Depayloader do
 
   @impl true
   def handle_caps(_pad, _caps, _context, state) do
-    caps = %Basic.Formats.Frame{encoding: :utf8}
+    caps = %Frame{encoding: :utf8}
     {{:ok, caps: {:output, caps}}, state}
   end
 
@@ -51,9 +52,10 @@ defmodule Basic.Elements.Depayloader do
 
     case type do
       "e" ->
-        actions = prepare_frame(Enum.reverse(frame), timestamp)
+        frame = prepare_frame(frame)
         state = Map.put(state, :frame, [])
-        {{:ok, actions}, state}
+        buffer = %Membrane.Buffer{payload: frame, pts: String.to_integer(timestamp)}
+        {{:ok, [buffer: {:output, buffer}]}, state}
 
       _ ->
         state = Map.put(state, :frame, frame)
@@ -61,9 +63,7 @@ defmodule Basic.Elements.Depayloader do
     end
   end
 
-  defp prepare_frame(frame, timestamp) do
-    frame = frame |> Enum.join("")
-    buffer = %Membrane.Buffer{payload: frame, pts: String.to_integer(timestamp)}
-    [buffer: {:output, buffer}]
+  defp prepare_frame(frame) do
+    frame |> Enum.reverse() |> Enum.join("")
   end
 end

@@ -37,7 +37,7 @@ defmodule OrderingBufferTest do
     [buffer: {:output, buffers}] = actions
     concatenated = Enum.map(buffers, & &1.payload) |> Enum.join("")
     assert concatenated == "Hello! How are you?"
-    assert state.ordered_packets == [{7, "Something else"}]
+    assert state.ordered_packets == [{7, %Buffer{payload: "Something else"}}]
     assert state.last_processed_seq_id == 3
   end
 end

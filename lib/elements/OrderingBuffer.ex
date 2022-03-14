@@ -1,14 +1,15 @@
 defmodule Basic.Elements.OrderingBuffer do
   @moduledoc """
   An element that gathers the packets and puts them in the order, sorted by their sequence id.
-  Once the consistent batch of packets (which means - with no packets missing with packets inbetween) is completely gathered, it is send through the output pad.
+  Once the consistent batch of packets (which means - with no packets missing in-between) is completely gathered, it is sent through the output pad.
   """
 
   use Membrane.Filter
+  alias Basic.Formats.Packet
 
-  def_input_pad(:input, demand_unit: :buffers, caps: {Basic.Formats.Packet, type: :custom_packets})
+  def_input_pad(:input, demand_unit: :buffers, caps: {Packet, type: :custom_packets})
 
-  def_output_pad(:output, caps: {Basic.Formats.Packet, type: :custom_packets})
+  def_output_pad(:output, caps: {Packet, type: :custom_packets})
 
   @impl true
   def handle_init(_options) do
@@ -37,18 +38,19 @@ defmodule Basic.Elements.OrderingBuffer do
     {last_seq_id, _} = Enum.at(ordered_packets, 0)
 
     if state.last_processed_seq_id + 1 == last_seq_id do
-      reversed_ready_packets_sequence = get_ready_packets_sequence(ordered_packets, [])
+      {reversed_ready_packets_sequence, ordered_packets} =
+        get_ready_packets_sequence(ordered_packets, [])
+
       [{last_processed_seq_id, _} | _] = reversed_ready_packets_sequence
 
-      ordered_packets =
-        Enum.slice(
-          ordered_packets,
-          Range.new(length(reversed_ready_packets_sequence), length(ordered_packets))
-        )
+      state = %{
+        state
+        | ordered_packets: ordered_packets,
+          last_processed_seq_id: last_processed_seq_id
+      }
 
-      state = Map.put(state, :ordered_packets, ordered_packets)
-      state = Map.put(state, :last_processed_seq_id, last_processed_seq_id)
-      buffers = Enum.reverse(reversed_ready_packets_sequence) |> Enum.map(fn {_seq_id, data} -> data end)
+      buffers =
+        Enum.reverse(reversed_ready_packets_sequence) |> Enum.map(fn {_seq_id, data} -> data end)
 
       {{:ok, buffer: {:output, buffers}}, state}
     else
@@ -57,7 +59,7 @@ defmodule Basic.Elements.OrderingBuffer do
   end
 
   defp get_ready_packets_sequence([], acc) do
-    acc
+    {acc, []}
   end
 
   defp get_ready_packets_sequence(
@@ -68,8 +70,8 @@ defmodule Basic.Elements.OrderingBuffer do
     get_ready_packets_sequence([{second_id, second_data} | rest], [first_seq | acc])
   end
 
-  defp get_ready_packets_sequence([first_seq | _rest], acc) do
-    [first_seq | acc]
+  defp get_ready_packets_sequence([first_seq | rest], acc) do
+    {[first_seq | acc], rest}
   end
 
   defp unzip_packet(packet) do

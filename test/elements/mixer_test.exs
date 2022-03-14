@@ -6,6 +6,7 @@ defmodule MixerTest do
   import Membrane.Testing.Assertions
   alias Membrane.Testing.{Source, Sink, Pipeline}
   import Membrane.ParentSpec
+  alias Basic.Formats.Frame
 
   doctest Basic.Elements.Mixer
 
@@ -21,12 +22,12 @@ defmodule MixerTest do
   ]
 
   test "Mixer should mix frames coming from two sources, based on the timestamps" do
-
     generator = fn state, size ->
       if state == [] do
         {[end_of_stream: :output], state}
       else
-        [buffer| new_state] = state
+        [buffer | new_state] = state
+
         if size > 1 do
           {[buffer: {:output, buffer}, redemand: :output], new_state}
         else
@@ -37,8 +38,8 @@ defmodule MixerTest do
 
     options = %Pipeline.Options{
       elements: [
-        source1: %Source{output: {@first_input_frames, generator}, caps: %Basic.Formats.Frame{encoding: :utf8}},
-        source2: %Source{output: {@second_input_frames, generator}, caps: %Basic.Formats.Frame{encoding: :utf8}},
+        source1: %Source{output: {@first_input_frames, generator}, caps: %Frame{encoding: :utf8}},
+        source2: %Source{output: {@second_input_frames, generator}, caps: %Frame{encoding: :utf8}},
         mixer: Mixer,
         sink: Sink
       ],
@@ -48,6 +49,7 @@ defmodule MixerTest do
         link(:mixer) |> to(:sink)
       ]
     }
+
     {:ok, pipeline} = Pipeline.start_link(options)
     Pipeline.play(pipeline)
     assert_start_of_stream(pipeline, :sink)
@@ -62,5 +64,4 @@ defmodule MixerTest do
     refute_sink_buffer(pipeline, :sink, _, 0)
     Pipeline.stop_and_terminate(pipeline, blocking?: true)
   end
-
 end

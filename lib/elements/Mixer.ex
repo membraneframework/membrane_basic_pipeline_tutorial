@@ -3,12 +3,13 @@ defmodule Basic.Elements.Mixer do
   Element responsible for mixing the frames coming from two sources, basing on their timestamps.
   """
   use Membrane.Filter
+  alias Basic.Formats.Frame
 
-  def_input_pad(:first_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8})
+  def_input_pad(:first_input, demand_unit: :buffers, caps: {Frame, encoding: :utf8})
 
-  def_input_pad(:second_input, demand_unit: :buffers, caps: {Basic.Formats.Frame, encoding: :utf8})
+  def_input_pad(:second_input, demand_unit: :buffers, caps: {Frame, encoding: :utf8})
 
-  def_output_pad(:output, caps: {Basic.Formats.Frame, encoding: :utf8})
+  def_output_pad(:output, caps: {Frame, encoding: :utf8})
 
   defmodule Track do
     @type t :: %__MODULE__{
@@ -29,7 +30,11 @@ defmodule Basic.Elements.Mixer do
 
   @impl true
   def handle_demand(:output, size, _unit, ctx, state) when size > 0 do
-    {state, actions} = update_state_and_prepare_actions(state, ctx.pads)
+    {state, buffer_actions} = output_buffers(state)
+    {state, end_of_stream_actions} = maybe_send_end_of_stream(state)
+    {state, demand_actions} = demand_on_empty_tracks(state, ctx.pads)
+
+    actions = buffer_actions ++ end_of_stream_actions ++ demand_actions
     {{:ok, actions}, state}
   end
 
@@ -56,15 +61,6 @@ defmodule Basic.Elements.Mixer do
 
     state = %{state | tracks: tracks}
     {{:ok, [{:redemand, :output}]}, state}
-  end
-
-  defp update_state_and_prepare_actions(state, pads) do
-    {state, buffer_actions} = output_buffers(state)
-    {state, end_of_stream_actions} = send_end_of_stream(state)
-    {state, demand_actions} = demand_on_empty_tracks(state, pads)
-
-    actions = buffer_actions ++ end_of_stream_actions ++ demand_actions
-    {state, actions}
   end
 
   defp output_buffers(state) do
@@ -97,7 +93,7 @@ defmodule Basic.Elements.Mixer do
     end
   end
 
-  defp send_end_of_stream(state) do
+  defp maybe_send_end_of_stream(state) do
     end_of_stream_actions =
       if Enum.all?(state.tracks, fn {_, track} -> track.status == :finished end) do
         [end_of_stream: :output]
