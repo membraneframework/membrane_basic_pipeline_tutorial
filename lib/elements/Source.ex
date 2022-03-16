@@ -37,11 +37,6 @@ defmodule Basic.Elements.Source do
   end
 
   @impl true
-  def handle_demand(:output, 0, :buffers, _ctx, state) do
-    {:ok, state}
-  end
-
-  @impl true
   def handle_demand(:output, _size, :buffers, _ctx, state) do
     if state.content == [] do
       {{:ok, end_of_stream: :output}, state}
