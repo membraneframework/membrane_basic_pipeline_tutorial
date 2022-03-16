@@ -5,7 +5,7 @@ defmodule OrderingBufferTest do
 
   @initial_state %{
     ordered_packets: [],
-    last_processed_seq_id: 0
+    last_sent_seq_id: 0
   }
 
   doctest Basic.Elements.OrderingBuffer
@@ -38,6 +38,6 @@ defmodule OrderingBufferTest do
     concatenated = Enum.map(buffers, & &1.payload) |> Enum.join("")
     assert concatenated == "Hello! How are you?"
     assert state.ordered_packets == [{7, %Buffer{payload: "Something else"}}]
-    assert state.last_processed_seq_id == 3
+    assert state.last_sent_seq_id == 3
   end
 end

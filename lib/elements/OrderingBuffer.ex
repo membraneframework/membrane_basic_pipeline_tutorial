@@ -16,7 +16,7 @@ defmodule Basic.Elements.OrderingBuffer do
     {:ok,
      %{
        ordered_packets: [],
-       last_processed_seq_id: 0
+       last_sent_seq_id: 0
      }}
   end
 
@@ -37,16 +37,16 @@ defmodule Basic.Elements.OrderingBuffer do
     state = Map.put(state, :ordered_packets, ordered_packets)
     {last_seq_id, _} = Enum.at(ordered_packets, 0)
 
-    if state.last_processed_seq_id + 1 == last_seq_id do
+    if state.last_sent_seq_id + 1 == last_seq_id do
       {reversed_ready_packets_sequence, ordered_packets} =
         get_ready_packets_sequence(ordered_packets, [])
 
-      [{last_processed_seq_id, _} | _] = reversed_ready_packets_sequence
+      [{last_sent_seq_id, _} | _] = reversed_ready_packets_sequence
 
       state = %{
         state
         | ordered_packets: ordered_packets,
-          last_processed_seq_id: last_processed_seq_id
+          last_sent_seq_id: last_sent_seq_id
       }
 
       buffers =

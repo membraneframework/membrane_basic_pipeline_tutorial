@@ -29,7 +29,7 @@ defmodule Basic.Elements.Mixer do
   end
 
   @impl true
-  def handle_demand(:output, size, _unit, ctx, state) when size > 0 do
+  def handle_demand(:output, _size, _unit, ctx, state) do
     {state, buffer_actions} = output_buffers(state)
     {state, end_of_stream_actions} = maybe_send_end_of_stream(state)
     {state, demand_actions} = demand_on_empty_tracks(state, ctx.pads)
@@ -37,9 +37,6 @@ defmodule Basic.Elements.Mixer do
     actions = buffer_actions ++ end_of_stream_actions ++ demand_actions
     {{:ok, actions}, state}
   end
-
-  @impl true
-  def handle_demand(_ref, _size, _unit, _ctx, state), do: {state, []}
 
   @impl true
   def handle_end_of_stream(pad, _context, state) do
