@@ -9,7 +9,7 @@ defmodule DepayloaderTest do
   alias Membrane.Testing.{Source, Sink, Pipeline}
   alias Basic.Formats.Packet
 
-  doctest Basic.Elements.OrderingBuffer
+  doctest Basic.Elements.Depayloader
 
   test "Depayloader should assemble the packets and form a frame (with membrane's testing framework)" do
     inputs = [

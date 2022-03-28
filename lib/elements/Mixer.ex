@@ -30,9 +30,9 @@ defmodule Basic.Elements.Mixer do
 
   @impl true
   def handle_demand(:output, _size, _unit, ctx, state) do
-    {state, buffer_actions} = output_buffers(state)
+    {state, buffer_actions} = get_output_buffers_actions(state)
     {state, end_of_stream_actions} = maybe_send_end_of_stream(state)
-    {state, demand_actions} = demand_on_empty_tracks(state, ctx.pads)
+    {state, demand_actions} = get_demand_actions(state, ctx.pads)
 
     actions = buffer_actions ++ end_of_stream_actions ++ demand_actions
     {{:ok, actions}, state}
@@ -60,7 +60,7 @@ defmodule Basic.Elements.Mixer do
     {{:ok, [{:redemand, :output}]}, state}
   end
 
-  defp output_buffers(state) do
+  defp get_output_buffers_actions(state) do
     {buffers, tracks} = prepare_buffers(state.tracks)
     state = %{state | tracks: tracks}
     buffer_actions = Enum.map(buffers, fn buffer -> {:buffer, {:output, buffer}} end)
@@ -101,7 +101,7 @@ defmodule Basic.Elements.Mixer do
     {state, end_of_stream_actions}
   end
 
-  defp demand_on_empty_tracks(state, pads) do
+  defp get_demand_actions(state, pads) do
     actions =
       state.tracks
       |> Enum.filter(fn {track_id, track} ->
