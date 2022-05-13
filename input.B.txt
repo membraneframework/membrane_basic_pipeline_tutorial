@@ -1,0 +1,10 @@
+[seq:5][frameid:1e][timestamp:2]s!
+[seq:8][frameid:2][timestamp:4]g a
+[seq:10][frameid:2e][timestamp:4]ll!
+[seq:3][frameid:1][timestamp:2]e, t
+[seq:4][frameid:1][timestamp:2]hank
+[seq:7][frameid:2][timestamp:4]hin
+[seq:9][frameid:2][timestamp:4]t a
+[seq:2][frameid:1][timestamp:2] fin
+[seq:1][frameid:1][timestamp:2]I am
+[seq:6][frameid:2][timestamp:4]Not
