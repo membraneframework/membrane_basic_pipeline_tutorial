@@ -1,4 +1,0 @@
-A: Hello! How are you?
-B: I am fine, thanks!
-A: What are you doing?
-B: Nothing at all!
