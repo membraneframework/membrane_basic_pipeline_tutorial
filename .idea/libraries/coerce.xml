@@ -1,0 +1,25 @@
+<component name="libraryTable">
+  <library name="coerce" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/coerce/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/coerce/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/coerce/lib" />
+      <root url="file://$PROJECT_DIR$/deps/coerce/lib" />
+      <root url="file://$PROJECT_DIR$/deps/coerce/lib" />
+      <root url="file://$PROJECT_DIR$/deps/coerce/lib" />
+    </SOURCES>
+  </library>
+</component>

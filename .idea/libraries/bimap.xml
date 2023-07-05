@@ -1,0 +1,25 @@
+<component name="libraryTable">
+  <library name="bimap" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/bimap/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/bimap/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/bimap/lib" />
+      <root url="file://$PROJECT_DIR$/deps/bimap/lib" />
+      <root url="file://$PROJECT_DIR$/deps/bimap/lib" />
+      <root url="file://$PROJECT_DIR$/deps/bimap/lib" />
+    </SOURCES>
+  </library>
+</component>

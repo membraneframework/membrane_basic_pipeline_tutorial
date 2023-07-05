@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="ELIXIR_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/_build/dev/lib/basic/ebin" />
+    <output-test url="file://$MODULE_DIR$/_build/test/lib/basic/ebin" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/lib" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/spec" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/bimap" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/bunch" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/coerce" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/membrane_caps_audio_raw" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/membrane_caps_video_raw" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/membrane_core" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/membrane_raw_audio_format" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/membrane_raw_video_format" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/numbers" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/qex" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/ratio" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/telemetry" />
+      <excludeFolder url="file://$MODULE_DIR$/assets/node_modules/phoenix" />
+      <excludeFolder url="file://$MODULE_DIR$/assets/node_modules/phoenix_html" />
+      <excludeFolder url="file://$MODULE_DIR$/cover" />
+      <excludeFolder url="file://$MODULE_DIR$/deps" />
+      <excludeFolder url="file://$MODULE_DIR$/doc" />
+      <excludeFolder url="file://$MODULE_DIR$/logs" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/bimap" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/bunch" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/coerce" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/meck" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/membrane_core" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/membrane_raw_audio_format" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/membrane_raw_video_format" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/mock" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/numbers" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/qex" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/ratio" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/telemetry" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="membrane_core" level="project" />
+    <orderEntry type="library" name="membrane_raw_video_format" level="project" />
+    <orderEntry type="library" name="membrane_raw_audio_format" level="project" />
+    <orderEntry type="library" name="mock" level="project" />
+    <orderEntry type="library" name="ex_doc" level="project" />
+    <orderEntry type="library" name="dialyxir" level="project" />
+    <orderEntry type="library" name="credo" level="project" />
+    <orderEntry type="library" name="espec" level="project" />
+    <orderEntry type="library" name="excoveralls" level="project" />
+    <orderEntry type="library" name="qex" level="project" />
+    <orderEntry type="library" name="telemetry" level="project" />
+    <orderEntry type="library" name="bunch" level="project" />
+    <orderEntry type="library" name="ratio" level="project" />
+    <orderEntry type="library" name="bimap" level="project" />
+    <orderEntry type="library" name="meck" level="project" />
+    <orderEntry type="library" name="markdown" level="project" />
+    <orderEntry type="library" name="earmark" level="project" />
+    <orderEntry type="library" name="numbers" level="project" />
+    <orderEntry type="library" name="decimal" level="project" />
+    <orderEntry type="library" name="stream_data" level="project" />
+    <orderEntry type="library" name="coerce" level="project" />
+    <orderEntry type="library" name="inch_ex" level="project" />
+    <orderEntry type="library" name="makeup_diff" level="project" />
+    <orderEntry type="library" name="mox" level="project" />
+    <orderEntry type="library" name="junit_formatter" level="project" />
+  </component>
+</module>
