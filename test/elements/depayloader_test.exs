@@ -3,8 +3,6 @@ defmodule DepayloaderTest do
   alias Basic.Elements.Depayloader
   alias Membrane.Buffer
 
-  alias Membrane.Testing.{Source, Sink}
-
   import Membrane.ChildrenSpec
   import Membrane.Testing.Assertions
   alias Membrane.Testing.{Source, Sink, Pipeline}
