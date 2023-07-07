@@ -1,3 +1,2 @@
-{:ok, pid} = Basic.Pipeline.start()
-Basic.Pipeline.play(pid)
+{:ok, _sup, _pipeline} = Basic.Pipeline.start_link([])
 Process.sleep(500)

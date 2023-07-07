@@ -11,7 +11,7 @@ defmodule OrderingBufferTest do
   doctest Basic.Elements.OrderingBuffer
 
   test "Ordering buffer should order the incoming packets" do
-    {{:ok, actions}, state} =
+    {actions, state} =
       OrderingBuffer.handle_process(
         :input,
         %Buffer{payload: "[seq:2]How are"},
@@ -21,17 +21,17 @@ defmodule OrderingBufferTest do
 
     assert actions == [redemand: :output]
 
-    {{:ok, actions}, state} =
+    {actions, state} =
       OrderingBuffer.handle_process(:input, %Buffer{payload: "[seq:3] you?"}, nil, state)
 
     assert actions == [redemand: :output]
 
-    {{:ok, actions}, state} =
+    {actions, state} =
       OrderingBuffer.handle_process(:input, %Buffer{payload: "[seq:7]Something else"}, nil, state)
 
     assert actions == [redemand: :output]
 
-    {{:ok, actions}, state} =
+    {actions, state} =
       OrderingBuffer.handle_process(:input, %Buffer{payload: "[seq:1]Hello! "}, nil, state)
 
     [buffer: {:output, buffers}] = actions

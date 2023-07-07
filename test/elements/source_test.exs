@@ -12,22 +12,22 @@ defmodule SourceTest do
 
   describe "Source" do
     test "is initialized properly" do
-      {:ok, state} = Source.handle_init(@options)
+      {_, state} = Source.handle_init(nil, @options)
       assert state.location == @options.location
       assert state.content == nil
     end
 
     test "reads the input file correctly" do
       with_mock File, read!: fn _ -> "First Line\nSecond Line" end do
-        {{:ok, _}, state} =
-          Source.handle_stopped_to_prepared(nil, %{location: @exemplary_location, content: nil})
+        {_, state} =
+          Source.handle_playing(nil, %{location: @exemplary_location, content: nil})
 
         assert state.content == @exemplary_content
       end
     end
 
     test "supplies the buffers" do
-      {{:ok, actions}, state} =
+      {actions, state} =
         Source.handle_demand(:output, 1, :buffers, nil, %{
           location: @exemplary_location,
           content: @exemplary_content
@@ -41,7 +41,7 @@ defmodule SourceTest do
     end
 
     test "redemands if more then one buffer is demanded" do
-      {{:ok, actions}, state} =
+      {actions, state} =
         Source.handle_demand(:output, 2, :buffers, nil, %{
           location: @exemplary_location,
           content: @exemplary_content
@@ -56,7 +56,7 @@ defmodule SourceTest do
     end
 
     test "sends end of stream once there are no buffers" do
-      {{:ok, actions}, state} =
+      {actions, state} =
         Source.handle_demand(:output, 1, :buffers, nil, %{
           location: @exemplary_location,
           content: []
