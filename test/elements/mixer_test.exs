@@ -36,20 +36,6 @@ defmodule MixerTest do
       end
     end
 
-#    options = %Pipeline.Options{
-#      elements: [
-#        source1: %Source{output: {@first_input_frames, generator}, caps: %Frame{encoding: :utf8}},
-#        source2: %Source{output: {@second_input_frames, generator}, caps: %Frame{encoding: :utf8}},
-#        mixer: Mixer,
-#        sink: Sink
-#      ],
-#      links: [
-#        link(:source1) |> via_in(:first_input) |> to(:mixer),
-#        link(:source2) |> via_in(:second_input) |> to(:mixer),
-#        link(:mixer) |> to(:sink)
-#      ]
-#    }
-
     structure = [
       child(:source1, %Source{output: {@first_input_frames, generator}, stream_format: %Frame{encoding: :utf8}}),
       child(:source2, %Source{output: {@second_input_frames, generator}, stream_format: %Frame{encoding: :utf8}}),
@@ -61,7 +47,6 @@ defmodule MixerTest do
     ]
 
     pipeline = Pipeline.start_link_supervised!(structure: structure)
-#    Pipeline.play(pipeline)
     assert_start_of_stream(pipeline, :sink)
     # The idea is to chceck if the frames came in the proper order
     assert_sink_buffer(pipeline, :sink, %Buffer{pts: 1})
@@ -72,6 +57,5 @@ defmodule MixerTest do
     # And this sequence of assertions apparently deos not chceck the order
     assert_end_of_stream(pipeline, :sink)
     refute_sink_buffer(pipeline, :sink, _, 0)
-#    Pipeline.stop_and_terminate(pipeline, blocking?: true)
   end
 end

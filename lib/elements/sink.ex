@@ -1,6 +1,8 @@
 defmodule Basic.Elements.Sink do
+  @moduledoc """
+  An element writing the data to the text file.
+  """
   use Membrane.Sink
-  alias Basic.Formats.Frame
 
   def_options location: [
                 spec: String.t,

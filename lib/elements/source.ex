@@ -1,4 +1,7 @@
 defmodule Basic.Elements.Source do
+  @moduledoc """
+  A module that provides a source element allowing to read a packetized data from the input text file.
+  """
   use Membrane.Source
   alias Membrane.Buffer
   alias Basic.Formats.Packet

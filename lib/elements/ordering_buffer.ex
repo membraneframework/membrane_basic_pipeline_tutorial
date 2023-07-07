@@ -1,4 +1,8 @@
 defmodule Basic.Elements.OrderingBuffer do
+  @moduledoc """
+  An element that gathers the packets and puts them in the order, sorted by their sequence id.
+  Once the consistent batch of packets (which means - with no packets missing in-between) is completely gathered, it is sent through the output pad.
+  """
   use Membrane.Filter
   alias Basic.Formats.Packet
 

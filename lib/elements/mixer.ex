@@ -1,4 +1,7 @@
 defmodule Basic.Elements.Mixer do
+  @moduledoc """
+  Element responsible for mixing the frames coming from two sources, basing on their timestamps.
+  """
   use Membrane.Filter
   alias Basic.Formats.Frame
 

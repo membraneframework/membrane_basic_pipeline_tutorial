@@ -1,4 +1,7 @@
 defmodule Basic.Elements.Depayloader do
+  @moduledoc """
+  Element responsible for assembling the frames out of ordered packets.
+  """
   use Membrane.Filter
   alias Basic.Formats.{Packet, Frame}
 
@@ -47,7 +50,7 @@ defmodule Basic.Elements.Depayloader do
     regex =
       ~r/^\[frameid\:(?<frame_id>\d+(?<type>[s|e]*))\]\[timestamp\:(?<timestamp>\d+)\](?<data>.*)$/
 
-    %{"data" => data, "frame_id" => frame_id, "type" => type, "timestamp" => timestamp} =
+    %{"data" => data, "frame_id" => _frame_id, "type" => type, "timestamp" => timestamp} =
       Regex.named_captures(regex, packet)
 
     frame = [data | state.frame]

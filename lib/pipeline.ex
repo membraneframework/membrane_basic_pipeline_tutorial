@@ -1,15 +1,17 @@
 defmodule Basic.Pipeline do
+  @moduledoc """
+  A module providing the pipeline, which aggregates and links the elements.
+  """
   use Membrane.Pipeline
   import Membrane.ChildrenSpec
-  import Membrane.Pipeline
 
   @impl true
-  def handle_init(_context, options) do
+  def handle_init(_context, _options) do
     {[], %{}}
   end
 
   @impl true
-  def handle_setup(_context, state) do
+  def handle_setup(_context, _state) do
     structure = [
       child(:input1, %Basic.Elements.Source{location: "input.A.txt"})
       |> child(:ordering_buffer1, Basic.Elements.OrderingBuffer)
