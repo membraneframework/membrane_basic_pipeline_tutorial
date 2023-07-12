@@ -5,28 +5,22 @@ defmodule Basic.Elements.Sink do
   use Membrane.Sink
 
   def_options location: [
-                spec: String.t,
+                spec: String.t(),
                 description: "Path to the file"
               ]
 
   def_input_pad :input,
-                [
-                  demand_unit: :buffers,
-                  accepted_format: _any
-                ]
+    demand_unit: :buffers,
+    accepted_format: _any
 
   @impl true
   def handle_init(_context, options) do
-    {[],
-      %{location: options.location}
-    }
+    {[], %{location: options.location}}
   end
 
   @impl true
   def handle_playing(_context, state) do
-    {[
-      demand: {:input, 10}
-    ], state}
+    {[demand: {:input, 10}], state}
   end
 
   @impl true

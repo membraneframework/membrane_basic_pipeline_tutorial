@@ -25,8 +25,6 @@ defmodule Basic.MixProject do
       {:membrane_raw_video_format, "~> 0.3.0"},
       {:membrane_raw_audio_format, "~> 0.11.0"},
       {:mock, "~> 0.3.0", only: :test}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
 end
