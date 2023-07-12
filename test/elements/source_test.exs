@@ -19,8 +19,7 @@ defmodule SourceTest do
 
     test "reads the input file correctly" do
       with_mock File, read!: fn _ -> "First Line\nSecond Line" end do
-        {_, state} =
-          Source.handle_playing(nil, %{location: @exemplary_location, content: nil})
+        {_, state} = Source.handle_playing(nil, %{location: @exemplary_location, content: nil})
 
         assert state.content == @exemplary_content
       end
