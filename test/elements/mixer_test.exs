@@ -37,13 +37,20 @@ defmodule MixerTest do
     end
 
     structure = [
-      child(:source1, %Source{output: {@first_input_frames, generator}, stream_format: %Frame{encoding: :utf8}}),
-      child(:source2, %Source{output: {@second_input_frames, generator}, stream_format: %Frame{encoding: :utf8}}),
-      child(:mixer, Mixer),
-      child(:sink, Sink),
-      get_child(:source1) |> via_in(:input) |> get_child(:mixer),
-      get_child(:source2) |> via_in(:input) |> get_child(:mixer),
-      get_child(:mixer) |> get_child(:sink)
+      child(:source1, %Source{
+        output: {@first_input_frames, generator},
+        stream_format: %Frame{encoding: :utf8}
+      })
+      |> via_in(:input)
+      |> child(:mixer, Mixer)
+      |> child(:sink, Sink),
+
+      child(:source2, %Source{
+        output: {@second_input_frames, generator},
+        stream_format: %Frame{encoding: :utf8}
+      })
+      |> via_in(:input)
+      |> get_child(:mixer)
     ]
 
     pipeline = Pipeline.start_link_supervised!(structure: structure)
@@ -57,5 +64,6 @@ defmodule MixerTest do
     # And this sequence of assertions apparently deos not chceck the order
     assert_end_of_stream(pipeline, :sink)
     refute_sink_buffer(pipeline, :sink, _, 0)
+    Pipeline.terminate(pipeline, blocking?: true)
   end
 end

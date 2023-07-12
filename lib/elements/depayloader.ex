@@ -11,26 +11,20 @@ defmodule Basic.Elements.Depayloader do
                   "Positive integer, describing how many packets form a single frame. Used to demand the proper number of packets while assembling the frame."
               ]
 
-
   def_input_pad :input,
-                [
-                  demand_unit: :buffers,
-                  accepted_format: %Packet{type: :custom_packets}
-                ]
+    demand_unit: :buffers,
+    accepted_format: %Packet{type: :custom_packets}
 
   def_output_pad :output,
-                 [
-                   accepted_format: %Frame{encoding: :utf8}
-                 ]
+    accepted_format: %Frame{encoding: :utf8}
 
   @impl true
   def handle_init(_context, options) do
     {[],
-      %{
-        frame: [],
-        packets_per_frame: options.packets_per_frame
-      }
-    }
+     %{
+       frame: [],
+       packets_per_frame: options.packets_per_frame
+     }}
   end
 
   @impl true
@@ -60,6 +54,7 @@ defmodule Basic.Elements.Depayloader do
         payload: prepare_frame(frame),
         pts: String.to_integer(timestamp)
       }
+
       {[buffer: {:output, buffer}], %{state | frame: []}}
     else
       {[], %{state | frame: frame}}
