@@ -9,20 +9,16 @@ defmodule Basic.Bin do
               ]
 
   def_output_pad :output,
-                 [
-                  demand_unit: :buffers,
-                  accepted_format: %Frame{encoding: :utf8}
-                 ]
+    demand_unit: :buffers,
+    accepted_format: %Frame{encoding: :utf8}
 
   def handle_init(_context, options) do
-    structure = [
+    structure =
       child(:input, %Basic.Elements.Source{location: options.input_filename})
       |> child(:ordering_buffer, Basic.Elements.OrderingBuffer)
       |> child(:depayloader, %Basic.Elements.Depayloader{packets_per_frame: 4})
       |> bin_output(:output)
-    ]
 
     {[spec: structure], %{}}
   end
-  
 end

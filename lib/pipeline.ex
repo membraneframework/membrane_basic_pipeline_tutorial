@@ -15,12 +15,14 @@ defmodule Basic.Pipeline do
     structure = [
       child(:mixer, Basic.Elements.Mixer)
       |> child(:output, %Basic.Elements.Sink{location: "output.txt"}),
-
-      child(:bin1, %Basic.Bin{input_filename: "input.A.txt"}) |> via_in(:first_input) |> get_child(:mixer),
-      child(:bin2, %Basic.Bin{input_filename: "input.B.txt"}) |> via_in(:second_input) |> get_child(:mixer)
+      child(:bin1, %Basic.Bin{input_filename: "input.A.txt"})
+      |> via_in(:first_input)
+      |> get_child(:mixer),
+      child(:bin2, %Basic.Bin{input_filename: "input.B.txt"})
+      |> via_in(:second_input)
+      |> get_child(:mixer)
     ]
 
     {[spec: structure], %{}}
   end
-
 end

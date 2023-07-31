@@ -6,48 +6,42 @@ defmodule Basic.Elements.Mixer do
   alias Basic.Formats.Frame
 
   def_input_pad :first_input,
-                [
-                  demand_unit: :buffers,
-                  accepted_format: %Frame{encoding: :utf8}
-                ]
+    demand_unit: :buffers,
+    accepted_format: %Frame{encoding: :utf8}
 
   def_input_pad :second_input,
-                [
-                  demand_unit: :buffers,
-                  accepted_format: %Frame{encoding: :utf8}
-                ]
+    demand_unit: :buffers,
+    accepted_format: %Frame{encoding: :utf8}
 
   def_output_pad :output,
-                 [
-                   accepted_format: %Frame{encoding: :utf8}
-                 ]
+    accepted_format: %Frame{encoding: :utf8}
 
   defmodule Track do
     @type t :: %__MODULE__{
-                 buffer: Membrane.Buffer.t(),
-                 status: :started | :finished
-               }
+            buffer: Membrane.Buffer.t(),
+            status: :started | :finished
+          }
     defstruct buffer: nil, status: :started
   end
 
   @impl true
   def handle_init(_context, _options) do
     {[],
-      %{
-        tracks: %{first_input: %Track{}, second_input: %Track{}}
-      }}
+     %{
+       tracks: %{first_input: %Track{}, second_input: %Track{}}
+     }}
   end
 
   @impl true
   def handle_process(pad, buffer, _context, state) do
-    new_tracks = Map.update!(state.tracks, pad, &(%Track{&1 | buffer: buffer}))
+    new_tracks = Map.update!(state.tracks, pad, &%Track{&1 | buffer: buffer})
     new_state = %{state | tracks: new_tracks}
     {[redemand: :output], new_state}
   end
 
   @impl true
   def handle_end_of_stream(pad, _context, state) do
-    new_tracks = Map.update!(state.tracks, pad, &(%Track{&1 | status: :finished}))
+    new_tracks = Map.update!(state.tracks, pad, &%Track{&1 | status: :finished})
     new_state = %{state | tracks: new_tracks}
     {[redemand: :output], new_state}
   end
@@ -98,6 +92,7 @@ defmodule Basic.Elements.Mixer do
       else
         []
       end
+
     {state, end_of_stream_actions}
   end
 
@@ -107,9 +102,8 @@ defmodule Basic.Elements.Mixer do
       |> Enum.filter(fn {track_id, track} ->
         track.status != :finished and track.buffer == nil and pads[track_id].demand == 0
       end)
-      |> Enum.map(fn {track_id, _} -> {:demand, {Pad.ref(track_id), 1} } end)
+      |> Enum.map(fn {track_id, _} -> {:demand, {Pad.ref(track_id), 1}} end)
 
     {state, actions}
   end
-
 end

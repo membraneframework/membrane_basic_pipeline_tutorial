@@ -37,25 +37,31 @@ defmodule MixerTest do
     end
 
     structure = [
-      child(:source1, %Source{output: {@first_input_frames, generator}, stream_format: %Frame{encoding: :utf8}}),
-      child(:source2, %Source{output: {@second_input_frames, generator}, stream_format: %Frame{encoding: :utf8}}),
-      child(:mixer, Mixer),
-      child(:sink, Sink),
-      get_child(:source1) |> via_in(:first_input) |> get_child(:mixer),
-      get_child(:source2) |> via_in(:second_input) |> get_child(:mixer),
-      get_child(:mixer) |> get_child(:sink)
+      child(:source1, %Source{
+        output: {@first_input_frames, generator},
+        stream_format: %Frame{encoding: :utf8}
+      })
+      |> via_in(:first_input)
+      |> child(:mixer, Mixer)
+      |> child(:sink, Sink),
+      child(:source2, %Source{
+        output: {@second_input_frames, generator},
+        stream_format: %Frame{encoding: :utf8}
+      })
+      |> via_in(:second_input)
+      |> get_child(:mixer)
     ]
 
     pipeline = Pipeline.start_link_supervised!(structure: structure)
     assert_start_of_stream(pipeline, :sink)
-    # The idea is to chceck if the frames came in the proper order
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 1})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 2})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 3})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 4})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 5})
-    # And this sequence of assertions apparently deos not chceck the order
+
+    Enum.each(1..5, fn expected_pts ->
+      assert_sink_buffer(pipeline, :sink, %Buffer{pts: received_pts})
+      assert expected_pts == received_pts
+    end)
+
     assert_end_of_stream(pipeline, :sink)
     refute_sink_buffer(pipeline, :sink, _, 0)
+    Pipeline.terminate(pipeline)
   end
 end
