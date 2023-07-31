@@ -13,7 +13,7 @@ defmodule Basic.Elements.Source do
 
   def_output_pad :output,
     accepted_format: %Packet{type: :custom_packets},
-    mode: :pull
+    flow_control: :manual
 
   @impl true
   def handle_init(_context, options) do

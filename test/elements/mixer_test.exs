@@ -54,15 +54,14 @@ defmodule MixerTest do
 
     pipeline = Pipeline.start_link_supervised!(structure: structure)
     assert_start_of_stream(pipeline, :sink)
-    # The idea is to chceck if the frames came in the proper order
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 1})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 2})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 3})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 4})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 5})
-    # And this sequence of assertions apparently deos not chceck the order
+
+    Enum.each(1..5, fn expected_pts ->
+      assert_sink_buffer(pipeline, :sink, %Buffer{pts: received_pts})
+      assert expected_pts == received_pts
+    end)
+
     assert_end_of_stream(pipeline, :sink)
     refute_sink_buffer(pipeline, :sink, _, 0)
-    Pipeline.terminate(pipeline, blocking?: true)
+    Pipeline.terminate(pipeline)
   end
 end
