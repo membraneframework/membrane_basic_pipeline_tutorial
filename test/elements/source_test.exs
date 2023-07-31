@@ -12,14 +12,15 @@ defmodule SourceTest do
 
   describe "Source" do
     test "is initialized properly" do
-      {_, state} = Source.handle_init(nil, @options)
+      {[], state} = Source.handle_init(nil, @options)
       assert state.location == @options.location
       assert state.content == nil
     end
 
     test "reads the input file correctly" do
       with_mock File, read!: fn _ -> "First Line\nSecond Line" end do
-        {_, state} = Source.handle_playing(nil, %{location: @exemplary_location, content: nil})
+        {_actions, state} =
+          Source.handle_playing(nil, %{location: @exemplary_location, content: nil})
 
         assert state.content == @exemplary_content
       end

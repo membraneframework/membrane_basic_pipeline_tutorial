@@ -29,7 +29,7 @@ defmodule DepayloaderTest do
 
     assert_end_of_stream(pipeline, :sink)
     refute_sink_buffer(pipeline, :sink, _, 0)
-    Pipeline.terminate(pipeline, blocking?: true)
+    Pipeline.terminate(pipeline)
   end
 
   test "Depayloader should assemble the packets and form a frame (with membrane's testing framework based on generator)" do
@@ -68,7 +68,7 @@ defmodule DepayloaderTest do
 
     assert_end_of_stream(pipeline, :sink)
     refute_sink_buffer(pipeline, :sink, _, 2000)
-    Pipeline.terminate(pipeline, blocking?: true)
+    Pipeline.terminate(pipeline)
   end
 
   test "Depayloader should assemble the packets and form a frame" do
