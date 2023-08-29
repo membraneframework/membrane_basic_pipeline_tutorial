@@ -10,6 +10,7 @@ defmodule Basic.Elements.Sink do
               ]
 
   def_input_pad :input,
+    flow_control: :manual,
     demand_unit: :buffers,
     accepted_format: _any
 
@@ -24,7 +25,7 @@ defmodule Basic.Elements.Sink do
   end
 
   @impl true
-  def handle_write(:input, buffer, _context, state) do
+  def handle_buffer(:input, buffer, _context, state) do
     File.write!(state.location, buffer.payload <> "\n", [:append])
     {[demand: {:input, 10}], state}
   end

@@ -6,14 +6,17 @@ defmodule Basic.Elements.Mixer do
   alias Basic.Formats.Frame
 
   def_input_pad :first_input,
+    flow_control: :manual,
     demand_unit: :buffers,
     accepted_format: %Frame{encoding: :utf8}
 
   def_input_pad :second_input,
+    flow_control: :manual,
     demand_unit: :buffers,
     accepted_format: %Frame{encoding: :utf8}
 
   def_output_pad :output,
+    flow_control: :manual,
     accepted_format: %Frame{encoding: :utf8}
 
   defmodule Track do
@@ -33,7 +36,7 @@ defmodule Basic.Elements.Mixer do
   end
 
   @impl true
-  def handle_process(pad, buffer, _context, state) do
+  def handle_buffer(pad, buffer, _context, state) do
     new_tracks = Map.update!(state.tracks, pad, &%Track{&1 | buffer: buffer})
     new_state = %{state | tracks: new_tracks}
     {[redemand: :output], new_state}

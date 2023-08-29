@@ -7,10 +7,12 @@ defmodule Basic.Elements.OrderingBuffer do
   alias Basic.Formats.Packet
 
   def_input_pad :input,
+    flow_control: :manual,
     demand_unit: :buffers,
     accepted_format: %Packet{type: :custom_packets}
 
   def_output_pad :output,
+    flow_control: :manual,
     accepted_format: %Packet{type: :custom_packets}
 
   @impl true
@@ -28,7 +30,7 @@ defmodule Basic.Elements.OrderingBuffer do
   end
 
   @impl true
-  def handle_process(:input, buffer, _context, state) do
+  def handle_buffer(:input, buffer, _context, state) do
     packet = unzip_packet(buffer.payload)
     ordered_packets = [packet | state.ordered_packets] |> Enum.sort()
     state = %{state | ordered_packets: ordered_packets}

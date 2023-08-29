@@ -17,12 +17,12 @@ defmodule DepayloaderTest do
       "[frameid:1e][timestamp:1] you?"
     ]
 
-    structure =
+    spec =
       child(:source, %Source{output: inputs, stream_format: %Packet{type: :custom_packets}})
       |> child(:depayloader, %Depayloader{packets_per_frame: 5})
       |> child(:sink, Sink)
 
-    pipeline = Pipeline.start_link_supervised!(structure: structure)
+    pipeline = Pipeline.start_link_supervised!(spec: spec)
     assert_start_of_stream(pipeline, :sink)
 
     assert_sink_buffer(pipeline, :sink, %Buffer{payload: "Hello! How are you?"})
@@ -53,7 +53,7 @@ defmodule DepayloaderTest do
       end
     end
 
-    structure =
+    spec =
       child(:source, %Source{
         output: {initial_state, generator},
         stream_format: %Packet{type: :custom_packets}
@@ -61,7 +61,7 @@ defmodule DepayloaderTest do
       |> child(:depayloader, %Depayloader{packets_per_frame: 5})
       |> child(:sink, Sink)
 
-    pipeline = Pipeline.start_link_supervised!(structure: structure)
+    pipeline = Pipeline.start_link_supervised!(spec: spec)
     assert_start_of_stream(pipeline, :sink)
 
     assert_sink_buffer(pipeline, :sink, %Buffer{payload: "Hello! How are you?"})
@@ -75,7 +75,7 @@ defmodule DepayloaderTest do
     {[], state} = Depayloader.handle_init(nil, %Depayloader{packets_per_frame: 5})
 
     {[], state} =
-      Depayloader.handle_process(
+      Depayloader.handle_buffer(
         :input,
         %Buffer{payload: "[frameid:1s][timestamp:1]Hello! "},
         nil,
@@ -83,7 +83,7 @@ defmodule DepayloaderTest do
       )
 
     {[], state} =
-      Depayloader.handle_process(
+      Depayloader.handle_buffer(
         :input,
         %Buffer{payload: "[frameid:1][timestamp:1]How are"},
         nil,
@@ -91,7 +91,7 @@ defmodule DepayloaderTest do
       )
 
     {actions, _state} =
-      Depayloader.handle_process(
+      Depayloader.handle_buffer(
         :input,
         %Buffer{payload: "[frameid:1e][timestamp:1] you?"},
         nil,

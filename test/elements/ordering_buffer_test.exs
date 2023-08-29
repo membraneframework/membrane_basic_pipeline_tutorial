@@ -12,7 +12,7 @@ defmodule OrderingBufferTest do
 
   test "Ordering buffer should order the incoming packets" do
     {actions, state} =
-      OrderingBuffer.handle_process(
+      OrderingBuffer.handle_buffer(
         :input,
         %Buffer{payload: "[seq:2]How are"},
         nil,
@@ -22,17 +22,17 @@ defmodule OrderingBufferTest do
     assert actions == [redemand: :output]
 
     {actions, state} =
-      OrderingBuffer.handle_process(:input, %Buffer{payload: "[seq:3] you?"}, nil, state)
+      OrderingBuffer.handle_buffer(:input, %Buffer{payload: "[seq:3] you?"}, nil, state)
 
     assert actions == [redemand: :output]
 
     {actions, state} =
-      OrderingBuffer.handle_process(:input, %Buffer{payload: "[seq:7]Something else"}, nil, state)
+      OrderingBuffer.handle_buffer(:input, %Buffer{payload: "[seq:7]Something else"}, nil, state)
 
     assert actions == [redemand: :output]
 
     {actions, state} =
-      OrderingBuffer.handle_process(:input, %Buffer{payload: "[seq:1]Hello! "}, nil, state)
+      OrderingBuffer.handle_buffer(:input, %Buffer{payload: "[seq:1]Hello! "}, nil, state)
 
     [buffer: {:output, buffers}] = actions
     concatenated = Enum.map(buffers, & &1.payload) |> Enum.join("")

@@ -12,10 +12,12 @@ defmodule Basic.Elements.Depayloader do
               ]
 
   def_input_pad :input,
+    flow_control: :manual,
     demand_unit: :buffers,
     accepted_format: %Packet{type: :custom_packets}
 
   def_output_pad :output,
+    flow_control: :manual,
     accepted_format: %Frame{encoding: :utf8}
 
   @impl true
@@ -38,7 +40,7 @@ defmodule Basic.Elements.Depayloader do
   end
 
   @impl true
-  def handle_process(:input, buffer, _ctx, state) do
+  def handle_buffer(:input, buffer, _ctx, state) do
     packet = buffer.payload
 
     regex =

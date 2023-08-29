@@ -36,7 +36,7 @@ defmodule MixerTest do
       end
     end
 
-    structure = [
+    spec = [
       child(:source1, %Source{
         output: {@first_input_frames, generator},
         stream_format: %Frame{encoding: :utf8}
@@ -52,7 +52,7 @@ defmodule MixerTest do
       |> get_child(:mixer)
     ]
 
-    pipeline = Pipeline.start_link_supervised!(structure: structure)
+    pipeline = Pipeline.start_link_supervised!(spec: spec)
     assert_start_of_stream(pipeline, :sink)
 
     Enum.each(1..5, fn expected_pts ->
