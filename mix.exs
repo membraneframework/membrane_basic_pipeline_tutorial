@@ -21,8 +21,10 @@ defmodule Basic.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:membrane_core, "~> 0.12.0"},
-      {:membrane_core, path: "../membrane_core", override: true},
+      {:membrane_core,
+       github: "membraneframework/membrane_core",
+       branch: "validate-testing-pipeline-options",
+       override: true},
       {:membrane_raw_video_format, "~> 0.3.0"},
       {:membrane_raw_audio_format, "~> 0.11.0"},
       {:mock, "~> 0.3.0", only: :test}
