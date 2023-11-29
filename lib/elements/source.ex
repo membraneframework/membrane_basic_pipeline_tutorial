@@ -17,7 +17,7 @@ defmodule Basic.Elements.Source do
 
   @impl true
   def handle_init(_context, options) do
-    {[],
+    {[setup: :incomplete],
      %{
        location: options.location,
        content: nil
@@ -25,16 +25,18 @@ defmodule Basic.Elements.Source do
   end
 
   @impl true
-  def handle_playing(_context, state) do
+  def handle_setup(_context, state) do
     content =
       File.read!(state.location)
       |> String.split("\n")
 
     new_state = %{state | content: content}
+    {[], new_state}
+  end
 
-    {[
-       stream_format: {:output, %Packet{type: :custom_packets}}
-     ], new_state}
+  @impl true
+  def handle_playing(_context, state) do
+    {[stream_format: {:output, %Packet{type: :custom_packets}}], state}
   end
 
   @impl true

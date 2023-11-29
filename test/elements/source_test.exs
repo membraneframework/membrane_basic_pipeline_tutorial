@@ -12,7 +12,7 @@ defmodule SourceTest do
 
   describe "Source" do
     test "is initialized properly" do
-      {[], state} = Source.handle_init(nil, @options)
+      {[setup: :incomplete], state} = Source.handle_init(nil, @options)
       assert state.location == @options.location
       assert state.content == nil
     end
@@ -20,10 +20,21 @@ defmodule SourceTest do
     test "reads the input file correctly" do
       with_mock File, read!: fn _ -> "First Line\nSecond Line" end do
         {_actions, state} =
-          Source.handle_playing(nil, %{location: @exemplary_location, content: nil})
+          Source.handle_setup(nil, %{location: @exemplary_location, content: nil})
 
         assert state.content == @exemplary_content
       end
+    end
+
+    test "sends appropriate stream format" do
+      {[
+         stream_format: {
+           :output,
+           %Basic.Formats.Packet{type: :custom_packets}
+         }
+       ],
+       nil} =
+        Source.handle_playing(nil, nil)
     end
 
     test "supplies the buffers" do
