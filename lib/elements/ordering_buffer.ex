@@ -56,20 +56,20 @@ defmodule Basic.Elements.OrderingBuffer do
     end
   end
 
-  defp get_ready_packets_sequence([], ready_sequence) do
-    {Enum.reverse(ready_sequence), []}
+  defp get_ready_packets_sequence([first_packet | ordered_rest], []) do
+    get_ready_packets_sequence(ordered_rest, [first_packet])
   end
 
   defp get_ready_packets_sequence(
-         [first_seq = {first_id, _}, second_seq = {second_id, _} | rest],
-         ready_sequence
+         [next_seq = {next_id, _} | ordered_rest],
+         [{last_id, _} | _] = ready_sequence
        )
-       when first_id + 1 == second_id do
-    get_ready_packets_sequence([second_seq | rest], [first_seq | ready_sequence])
+       when next_id == last_id + 1 do
+    get_ready_packets_sequence(ordered_rest, [next_seq | ready_sequence])
   end
 
-  defp get_ready_packets_sequence([first_seq | rest], ready_sequence) do
-    {Enum.reverse([first_seq | ready_sequence]), rest}
+  defp get_ready_packets_sequence(ordered_packets, ready_sequence) do
+    {Enum.reverse(ready_sequence), ordered_packets}
   end
 
   defp unzip_packet(packet) do
