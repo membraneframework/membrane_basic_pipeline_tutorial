@@ -37,70 +37,69 @@ defmodule Basic.Elements.Mixer do
 
   @impl true
   def handle_buffer(pad, buffer, _context, state) do
-    new_tracks = Map.update!(state.tracks, pad, &%Track{&1 | buffer: buffer})
-    new_state = %{state | tracks: new_tracks}
-    {[redemand: :output], new_state}
+    tracks = Map.update!(state.tracks, pad, &%Track{&1 | buffer: buffer})
+    {tracks, buffer_actions} = get_output_buffers_actions(tracks)
+    state = %{state | tracks: tracks}
+
+    {buffer_actions ++ [redemand: :output], state}
   end
 
   @impl true
   def handle_end_of_stream(pad, _context, state) do
-    new_tracks = Map.update!(state.tracks, pad, &%Track{&1 | status: :finished})
-    new_state = %{state | tracks: new_tracks}
-    {[redemand: :output], new_state}
+    tracks = Map.update!(state.tracks, pad, &%Track{&1 | status: :finished})
+    {tracks, buffer_actions} = get_output_buffers_actions(tracks)
+    state = %{state | tracks: tracks}
+
+    if Enum.all?(tracks, fn {_track_id, track} ->
+         track.status == :finished and track.buffer == nil
+       end) do
+      {buffer_actions ++ [end_of_stream: :output], state}
+    else
+      {buffer_actions ++ [redemand: :output], state}
+    end
   end
 
   @impl true
   def handle_demand(:output, _size, _unit, context, state) do
-    {state, buffer_actions} = get_output_buffers_actions(state)
-    end_of_stream_actions = maybe_get_end_of_stream(state)
-    demand_actions = get_demand_actions(state, context.pads)
+    demand_actions =
+      state.tracks
+      |> Enum.filter(fn {track_id, track} ->
+        track.status != :finished and track.buffer == nil and context.pads[track_id].demand == 0
+      end)
+      |> Enum.map(fn {track_id, _track} -> {:demand, {track_id, 1}} end)
 
-    actions = buffer_actions ++ end_of_stream_actions ++ demand_actions
-    {actions, state}
+    {demand_actions, state}
   end
 
-  defp get_output_buffers_actions(state) do
-    {buffers, tracks} = prepare_buffers(state.tracks)
-    state = %{state | tracks: tracks}
+  defp has_buffer?({_track_id, track}),
+    do: track.buffer != nil
+
+  defp can_send_buffer?(tracks) do
+    active_tracks =
+      tracks
+      |> Enum.filter(fn {_track_id, track} -> track.status == :started end)
+
+    Enum.all?(active_tracks, &has_buffer?/1) and Enum.any?(tracks, &has_buffer?/1)
+  end
+
+  defp get_output_buffers_actions(tracks) do
+    {buffers, tracks} = prepare_buffers(tracks)
     buffer_actions = Enum.map(buffers, fn buffer -> {:buffer, {:output, buffer}} end)
-    {state, buffer_actions}
+    {tracks, buffer_actions}
   end
 
   defp prepare_buffers(tracks) do
-    active_tracks =
-      tracks
-      |> Enum.reject(fn {_track_id, track} ->
-        track.status == :finished and track.buffer == nil
-      end)
-      |> Map.new()
-
-    if active_tracks != %{} and Enum.all?(active_tracks, fn {_, track} -> track.buffer != nil end) do
-      {track_id, track} =
-        active_tracks
+    if can_send_buffer?(tracks) do
+      {next_track_id, next_track} =
+        tracks
+        |> Enum.filter(&has_buffer?/1)
         |> Enum.min_by(fn {_track_id, track} -> track.buffer.pts end)
 
-      buffer = track.buffer
-      tracks = Map.put(tracks, track_id, %Track{track | buffer: nil})
+      tracks = Map.put(tracks, next_track_id, %Track{next_track | buffer: nil})
       {buffers, tracks} = prepare_buffers(tracks)
-      {[buffer | buffers], tracks}
+      {[next_track.buffer | buffers], tracks}
     else
       {[], tracks}
     end
-  end
-
-  defp maybe_get_end_of_stream(state) do
-    if Enum.all?(state.tracks, fn {_, track} -> track.status == :finished end) do
-      [end_of_stream: :output]
-    else
-      []
-    end
-  end
-
-  defp get_demand_actions(state, pads) do
-    state.tracks
-    |> Enum.filter(fn {track_id, track} ->
-      track.status != :finished and track.buffer == nil and pads[track_id].demand == 0
-    end)
-    |> Enum.map(fn {track_id, _} -> {:demand, {Pad.ref(track_id), 1}} end)
   end
 end
