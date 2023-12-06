@@ -50,9 +50,9 @@ defmodule Basic.Elements.Mixer do
     {tracks, buffer_actions} = get_output_buffers_actions(tracks)
     state = %{state | tracks: tracks}
 
-    if Enum.all?(tracks, fn {_track_id, track} ->
-         track.status == :finished and track.buffer == nil
-       end) do
+    if tracks
+       |> Enum.reject(&has_buffer?/1)
+       |> Enum.all?(fn {_track_id, track} -> track.status == :finished end) do
       {buffer_actions ++ [end_of_stream: :output], state}
     else
       {buffer_actions ++ [redemand: :output], state}
@@ -63,8 +63,9 @@ defmodule Basic.Elements.Mixer do
   def handle_demand(:output, _size, _unit, context, state) do
     demand_actions =
       state.tracks
+      |> Enum.reject(&has_buffer?/1)
       |> Enum.filter(fn {track_id, track} ->
-        track.status != :finished and track.buffer == nil and context.pads[track_id].demand == 0
+        track.status != :finished and context.pads[track_id].demand == 0
       end)
       |> Enum.map(fn {track_id, _track} -> {:demand, {track_id, 1}} end)
 
@@ -79,7 +80,8 @@ defmodule Basic.Elements.Mixer do
       tracks
       |> Enum.filter(fn {_track_id, track} -> track.status == :started end)
 
-    Enum.all?(active_tracks, &has_buffer?/1) and Enum.any?(tracks, &has_buffer?/1)
+    (active_tracks == [] and Enum.any?(tracks, &has_buffer?/1)) or
+      (active_tracks != [] and Enum.all?(active_tracks, &has_buffer?/1))
   end
 
   defp get_output_buffers_actions(tracks) do
