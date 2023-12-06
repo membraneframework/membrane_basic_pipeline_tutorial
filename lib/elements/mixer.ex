@@ -76,12 +76,14 @@ defmodule Basic.Elements.Mixer do
     do: track.buffer != nil
 
   defp can_send_buffer?(tracks) do
-    active_tracks =
-      tracks
-      |> Enum.filter(fn {_track_id, track} -> track.status == :started end)
+    started_tracks =
+      Enum.filter(
+        tracks,
+        fn {_track_id, track} -> track.status != :finished end
+      )
 
-    (active_tracks == [] and Enum.any?(tracks, &has_buffer?/1)) or
-      (active_tracks != [] and Enum.all?(active_tracks, &has_buffer?/1))
+    (started_tracks == [] and Enum.any?(tracks, &has_buffer?/1)) or
+      (started_tracks != [] and Enum.all?(started_tracks, &has_buffer?/1))
   end
 
   defp get_output_buffers_actions(tracks) do
