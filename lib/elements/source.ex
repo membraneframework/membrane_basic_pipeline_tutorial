@@ -17,7 +17,7 @@ defmodule Basic.Elements.Source do
 
   @impl true
   def handle_init(_context, options) do
-    {[setup: :incomplete],
+    {[],
      %{
        location: options.location,
        content: nil
