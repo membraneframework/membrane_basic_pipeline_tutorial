@@ -50,9 +50,9 @@ defmodule Basic.Elements.Mixer do
     {tracks, buffer_actions} = get_output_buffers_actions(tracks)
     state = %{state | tracks: tracks}
 
-    if tracks
-       |> Enum.reject(&has_buffer?/1)
-       |> Enum.all?(fn {_track_id, track} -> track.status == :finished end) do
+    if Enum.all?(tracks, fn {track_id, track} ->
+         track.status == :finished and not has_buffer?({track_id, track})
+       end) do
       {buffer_actions ++ [end_of_stream: :output], state}
     else
       {buffer_actions ++ [redemand: :output], state}
