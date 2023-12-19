@@ -23,4 +23,13 @@ defmodule Basic.Pipeline do
 
     {[spec: spec], %{}}
   end
+
+  @impl true
+  def handle_element_end_of_stream(:output, _pad, _context, state) do
+    {[terminate: :normal], state}
+  end
+
+  def handle_element_end_of_stream(_child, _pad, _context, state) do
+    {[], state}
+  end
 end

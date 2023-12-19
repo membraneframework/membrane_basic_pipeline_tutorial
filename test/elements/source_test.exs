@@ -12,7 +12,7 @@ defmodule SourceTest do
 
   describe "Source" do
     test "is initialized properly" do
-      {[setup: :incomplete], state} = Source.handle_init(nil, @options)
+      {[], state} = Source.handle_init(nil, @options)
       assert state.location == @options.location
       assert state.content == nil
     end
