@@ -5,7 +5,7 @@ defmodule MixerTest do
 
   import Membrane.Testing.Assertions
   alias Membrane.Testing.{Source, Sink, Pipeline}
-  import Membrane.ParentSpec
+  import Membrane.ChildrenSpec
   alias Basic.Formats.Frame
 
   doctest Basic.Elements.Mixer
@@ -36,32 +36,32 @@ defmodule MixerTest do
       end
     end
 
-    options = %Pipeline.Options{
-      elements: [
-        source1: %Source{output: {@first_input_frames, generator}, caps: %Frame{encoding: :utf8}},
-        source2: %Source{output: {@second_input_frames, generator}, caps: %Frame{encoding: :utf8}},
-        mixer: Mixer,
-        sink: Sink
-      ],
-      links: [
-        link(:source1) |> via_in(:first_input) |> to(:mixer),
-        link(:source2) |> via_in(:second_input) |> to(:mixer),
-        link(:mixer) |> to(:sink)
-      ]
-    }
+    spec = [
+      child(:source1, %Source{
+        output: {@first_input_frames, generator},
+        stream_format: %Frame{encoding: :utf8}
+      })
+      |> via_in(:first_input)
+      |> child(:mixer, Mixer)
+      |> child(:sink, Sink),
+      child(:source2, %Source{
+        output: {@second_input_frames, generator},
+        stream_format: %Frame{encoding: :utf8}
+      })
+      |> via_in(:second_input)
+      |> get_child(:mixer)
+    ]
 
-    {:ok, pipeline} = Pipeline.start_link(options)
-    Pipeline.play(pipeline)
+    pipeline = Pipeline.start_link_supervised!(spec: spec)
     assert_start_of_stream(pipeline, :sink)
-    # The idea is to chceck if the frames came in the proper order
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 1})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 2})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 3})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 4})
-    assert_sink_buffer(pipeline, :sink, %Buffer{pts: 5})
-    # And this sequence of assertions apparently deos not chceck the order
+
+    Enum.each(1..5, fn expected_pts ->
+      assert_sink_buffer(pipeline, :sink, %Buffer{pts: received_pts})
+      assert expected_pts == received_pts
+    end)
+
     assert_end_of_stream(pipeline, :sink)
     refute_sink_buffer(pipeline, :sink, _, 0)
-    Pipeline.stop_and_terminate(pipeline, blocking?: true)
+    Pipeline.terminate(pipeline)
   end
 end

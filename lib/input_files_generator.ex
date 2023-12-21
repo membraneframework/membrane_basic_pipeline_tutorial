@@ -1,7 +1,6 @@
 defmodule InputFilesGenerator do
   @moduledoc """
-  A module responsible for spliting a text file into multiple files, one per each speaker. Each of the files contains the packetized part of the text.
-  An packet holds some part of the frame (a few characters from the line).
+  A module responsible for spliting a text file into multiple files, one per each speaker. Each of the files contains the packetized part of the text. A packet holds some part of the frame (a few characters from the line).
   The input consists of lines in the following form:
   ```
   <Speaker ID>: <text>
@@ -13,9 +12,7 @@ defmodule InputFilesGenerator do
   ```
   where:
   + sequence_id - the ordering number of the packet (relative to each of the peers). Basing on this number we will be able to assemble the particular frame.
-  + frame_id - the identifier which consists of the number of the frame to which the body of a given packet belongs,
-  optionally followed by a single character **'e'** (meaning that the packet is the **e**nding packet of the frame).
-  Note that frames are numbered relatively to each peer in that conversation and that frame_id does not describe the global order of the frames in the final file.
+  + frame_id - the identifier which consists of the number of the frame to which the body of a given packet belongs, optionally followed by a single character **'s'** (meaning that this packet is a **s**tarting packet of a frame) or by **'e'** character (meaning that the packet is the **e**nding packet of the frame). Note that frames are numbered relatively to each peer in that conversation and that frame_id does not describe the global order of the frames in the final file.
   + timestamp - a number indicating a time at which a given sentence was said. Timestamp describes the order of the frames from both peers.
   + text - the proper body of the packet, in our case - a bunch of characters which could be sent in a single packet.
   """
