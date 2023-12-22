@@ -3,8 +3,7 @@ defmodule DepayloaderTest do
   alias Basic.Elements.Depayloader
   alias Membrane.Buffer
 
-  alias Membrane.Testing.{Source, Sink}
-
+  import Membrane.ChildrenSpec
   import Membrane.Testing.Assertions
   alias Membrane.Testing.{Source, Sink, Pipeline}
   alias Basic.Formats.Packet
@@ -18,23 +17,19 @@ defmodule DepayloaderTest do
       "[frameid:1e][timestamp:1] you?"
     ]
 
-    options = %Pipeline.Options{
-      elements: [
-        source: %Source{output: inputs, caps: %Packet{type: :custom_packets}},
-        depayloader: %Depayloader{packets_per_frame: 5},
-        sink: Sink
-      ]
-    }
+    spec =
+      child(:source, %Source{output: inputs, stream_format: %Packet{type: :custom_packets}})
+      |> child(:depayloader, %Depayloader{packets_per_frame: 5})
+      |> child(:sink, Sink)
 
-    {:ok, pipeline} = Pipeline.start_link(options)
-    Pipeline.play(pipeline)
+    pipeline = Pipeline.start_link_supervised!(spec: spec)
     assert_start_of_stream(pipeline, :sink)
 
     assert_sink_buffer(pipeline, :sink, %Buffer{payload: "Hello! How are you?"})
 
     assert_end_of_stream(pipeline, :sink)
     refute_sink_buffer(pipeline, :sink, _, 0)
-    Pipeline.stop_and_terminate(pipeline, blocking?: true)
+    Pipeline.terminate(pipeline)
   end
 
   test "Depayloader should assemble the packets and form a frame (with membrane's testing framework based on generator)" do
@@ -58,46 +53,45 @@ defmodule DepayloaderTest do
       end
     end
 
-    options = %Pipeline.Options{
-      elements: [
-        source: %Source{output: {initial_state, generator}, caps: %Packet{type: :custom_packets}},
-        depayloader: %Depayloader{packets_per_frame: 5},
-        sink: Sink
-      ]
-    }
+    spec =
+      child(:source, %Source{
+        output: {initial_state, generator},
+        stream_format: %Packet{type: :custom_packets}
+      })
+      |> child(:depayloader, %Depayloader{packets_per_frame: 5})
+      |> child(:sink, Sink)
 
-    {:ok, pipeline} = Pipeline.start_link(options)
-    Pipeline.play(pipeline)
+    pipeline = Pipeline.start_link_supervised!(spec: spec)
     assert_start_of_stream(pipeline, :sink)
 
     assert_sink_buffer(pipeline, :sink, %Buffer{payload: "Hello! How are you?"})
 
     assert_end_of_stream(pipeline, :sink)
     refute_sink_buffer(pipeline, :sink, _, 2000)
-    Pipeline.stop_and_terminate(pipeline, blocking?: true)
+    Pipeline.terminate(pipeline)
   end
 
   test "Depayloader should assemble the packets and form a frame" do
-    {:ok, state} = Depayloader.handle_init(%Depayloader{packets_per_frame: 5})
+    {[], state} = Depayloader.handle_init(nil, %Depayloader{packets_per_frame: 5})
 
-    {:ok, state} =
-      Depayloader.handle_process(
+    {[], state} =
+      Depayloader.handle_buffer(
         :input,
         %Buffer{payload: "[frameid:1s][timestamp:1]Hello! "},
         nil,
         state
       )
 
-    {:ok, state} =
-      Depayloader.handle_process(
+    {[], state} =
+      Depayloader.handle_buffer(
         :input,
         %Buffer{payload: "[frameid:1][timestamp:1]How are"},
         nil,
         state
       )
 
-    {{:ok, actions}, _state} =
-      Depayloader.handle_process(
+    {actions, _state} =
+      Depayloader.handle_buffer(
         :input,
         %Buffer{payload: "[frameid:1e][timestamp:1] you?"},
         nil,
